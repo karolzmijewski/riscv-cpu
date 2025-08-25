@@ -13,10 +13,10 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
 - **R-TYPE** (Register):
     Used for register-to-register operations (e.g., `add`, `sub`, `and`, `or`).
     ```
-    31      25 24   20 19   15 14 12 11    7 6     2 1  0
-    ┌─────────┬───────┬───────┬─────┬───────┬───────┬───┐
-    │  func7  │  rs2  │  rs1  │ f3  │   rd  │opcode │11 │
-    └─────────┴───────┴───────┴─────┴───────┴───────┴───┘
+    31      25 24   20 19   15 14 12 11    7 6      2 1   0
+    ┌─────────┬───────┬───────┬─────┬───────┬────────┬────┐
+    │  func7  │  rs2  │  rs1  │ f3  │   rd  │ opcode │ 11 │
+    └─────────┴───────┴───────┴─────┴───────┴────────┴────┘
     ```
 
 ---
@@ -24,10 +24,10 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
 - **I-TYPE** (Immediate):
     Used for operations with an immediate value (e.g., `addi`, loads).
     ```
-    31             20 19   15 14 12 11    7 6     2 1  0
-    ┌────────────────┬───────┬─────┬───────┬───────┬───┐
-    │   imm[11:0]    │  rs1  │ f3  │   rd  │opcode │11 │
-    └────────────────┴───────┴─────┴───────┴───────┴───┘
+    31             20 19   15 14 12 11    7 6      2 1   0
+    ┌────────────────┬───────┬─────┬───────┬────────┬────┐
+    │   imm[11:0]    │  rs1  │ f3  │   rd  │ opcode │ 11 │
+    └────────────────┴───────┴─────┴───────┴────────┴────┘
     ```
 
 ---
@@ -35,10 +35,10 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
 - **S-TYPE** (Store):
     Used for store instructions (e.g., `sw`, `sh`, `sb`).
     ```
-    31      25 24   20 19   15 14 12 11      7 6     2 1  0
-    ┌─────────┬───────┬───────┬─────┬─────────┬───────┬───┐
-    │ imm[11:5]│  rs2 │  rs1  │ f3  │ imm[4:0]│opcode │11 │
-    └─────────┴───────┴───────┴─────┴─────────┴───────┴───┘
+    31        25 24   20 19   15 14 12 11       7 6      2 1   0
+    ┌───────────┬───────┬───────┬─────┬──────────┬────────┬────┐
+    │ imm[11:5] │  rs2  │  rs1  │ f3  │ imm[4:0] │ opcode │ 11 │
+    └───────────┴───────┴───────┴─────┴──────────┴────────┴────┘
     ```
     **B-TYPE** (Branch) - variant of **S-TYPE**:
 
@@ -61,10 +61,10 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
 - **U-TYPE** (Upper Immediate):
     Used for instructions with large immediates (e.g., `lui`, `auipc`).
     ```
-    31                           12 11    7 6     2 1  0
-    ┌──────────────────────────────┬───────┬───────┬───┐
-    │          imm[31:12]          │   rd  │opcode │11 │
-    └──────────────────────────────┴───────┴───────┴───┘
+    31                           12 11    7 6      2 1   0
+    ┌──────────────────────────────┬───────┬────────┬────┐
+    │          imm[31:12]          │   rd  │ opcode │ 11 │
+    └──────────────────────────────┴───────┴────────┴────┘
     ```
 
     **J-TYPE** (Jump) - variant of **U-TYPE**:
