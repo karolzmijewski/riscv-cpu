@@ -5,3 +5,4 @@
 ## Documentation
 - [Environment setup](./docs/sw-env-setup.md)
 - [Dealing with code](./docs/sw-code-op.md)
+- [RV32I details](./docs/hw-riscv32i-basis.md)

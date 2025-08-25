@@ -68,9 +68,10 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
     ```
 
     **J-TYPE** (Jump) - variant of **U-TYPE**:
+
     The 20-bit immediate value is split across the instruction fields as follows:
     - e [20:20]
-    - f [19-9] 
+    - f [19-9]
     - g [8:8]
     - h [7:0]
 
