@@ -4,6 +4,9 @@
 #include "ap_int.h"
 
 // memory defines
+// it is set to 2^16 words, single word is 2^2 (4 bytes) so it will consume
+// (2^2)^16) = 2^18 bytes of memory, which is equal to 256 KB, change this
+// parameter to extend the memory
 #define RAM_ADDR_WIDTH 16
 #define RAM_SIZE (1 << RAM_ADDR_WIDTH)
 

@@ -2,6 +2,8 @@
 #include "fde_execute.hpp"
 
 static addr_t get_next_pc(addr_t pc) {
+// the pc was defined as word pointer, so +1 will get
+// the net word (next instruction in memory)
 #pragma HLS INLINE
     return (addr_t)(pc + 1);
 }
