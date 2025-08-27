@@ -1,0 +1,13 @@
+{
+  "name": "fde_ip",
+  "type": "HLS",
+  "configuration": {
+    "componentType": "HLS",
+    "configFiles": [
+      "hls_config.cfg"
+    ],
+    "work_dir": "fde_ip"
+  },
+  "useSysrootToolchain": false,
+  "template": "empty_hls_component"
+}
