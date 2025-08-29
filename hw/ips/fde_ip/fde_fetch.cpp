@@ -21,6 +21,7 @@ void fetch(addr_t pc, instr_t *p_ram, instr_t *p_instr) {
 // Choosing between "on" and "off" depends on whether clarity of hierarchy 
 // or performance optimization is the primary goal for the design.
 #pragma HLS INLINE off
+
     *p_instr = p_ram[pc];
 
 #ifndef __SYNTHESIS__

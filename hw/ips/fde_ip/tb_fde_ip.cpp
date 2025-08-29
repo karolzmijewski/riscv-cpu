@@ -11,7 +11,8 @@ unsigned int ram[RAM_SIZE] = {
  * is not supported by Vitis_HLS
 */
 int main() {
-    fde_ip(0, ram);
-    printf("done\n");
+    unsigned int instr_counter;
+    fde_ip(0, ram, &instr_counter);
+    printf("%d fetched and decoded instructions\n", instr_counter);
     return 0;
 }

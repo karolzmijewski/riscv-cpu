@@ -78,3 +78,17 @@ Each instruction in the RV32I ISA is **32 bits long**. The architecture defines 
     The 20-bit immediate value is assembled in the order: `e + h + g + f`.  
     It is then shifted left by one bit (trailing `0`) and sign-extended to 32 bits to form the jump displacement.  
     This displacement is added to the program counter (`pc`) when the jump instruction is executed.
+
+
+#### Instructions opcodes and formats (non privileged RISC-V ISA):
+
+| opcode | 000      | 001      | 010             | 011       | 100    | 101      | 110              | 111    |
+|--------|----------|----------|-----------------|-----------|--------|----------|------------------|--------|
+| 00     | LOAD     | LOD-FP   | CUSTOM-0        | MISC-MEM  | OP-IMM | AUIPC    | OP-IMM-23        | RV48-0 |
+|        | I-TYPE   | OTHER    | OTHER           | OTHER     | I-TYPE | U-TYPE   | OTHER            | OTHER  |
+| 01     | STORE    | STORE-FP | CUSTOM-1 / AMO  | OP        | LUI    | OP-32    | RV64             |        |
+|        | S-TYPE   | OTHER    | OTHER           | OTHER     | R-TYPE | U-TYPE   | OTHER            | OTHER  |
+| 10     | MADD     | MSUB     | NMSUB           | NMADD     | OP-FP  | RVSD-0   | CUSTOM2-RV128    | RV48-1 |
+|        | OTHER    | OTHER    | OTHER           | OTHER     | OTHER  | OTHER    | OTHER            | OTHER  |
+| 11     | BRANCH   | JALR     | RSVD-1          | JAL       | SYSTEM | RSVD-2   | CUSTOM3-RV128    | RV80   |
+|        | B-TYPE   | I-TYPE   | OTHER           | J-TYPE    | OTHER  | OTHER    | OTHER            | OTHER  |

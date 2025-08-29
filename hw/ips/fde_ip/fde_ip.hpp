@@ -3,6 +3,6 @@
 
 #include "fde_core.hpp"
 
-void fde_ip(unsigned int start_pc, unsigned int ram[RAM_SIZE]);
+void fde_ip(unsigned int start_pc, unsigned int ram[RAM_SIZE], unsigned int *p_instr_counter);
 
 #endif /* !FDE_IP_HPP! */
