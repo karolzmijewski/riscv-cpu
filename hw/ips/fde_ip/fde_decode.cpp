@@ -4,9 +4,9 @@
 #include "fde_dbg.hpp"
 
 #ifndef __SYNTHESIS__
-#ifdef DBG_FDE_IP
+#ifdef DBG_DECODE
 #include "fde_print.hpp"
-#endif /* !DBG_FDE_IP! */
+#endif /* !DBG_DECODE! */
 #endif /* !__SYNTHESIS__! */
 
 static void dec_instr(instr_t instr, dec_instr_t *p_dec_instr) {
@@ -38,8 +38,7 @@ static void dec_imm(instr_t instr, dec_instr_t *p_dec_instr) {
         case B_TYPE: p_dec_instr->imm = enc_b_imm(dec_imm); break;
         case U_TYPE: p_dec_instr->imm = enc_u_imm(dec_imm); break;
         case J_TYPE: p_dec_instr->imm = enc_j_imm(dec_imm); break;
-        case OTHER_TYPE: p_dec_instr->imm = 0;
-            break;
+        case OTHER_TYPE: p_dec_instr->imm = 0; break;
     }
 }
 
@@ -50,7 +49,7 @@ void decode(instr_t instr, dec_instr_t *p_dec_instr) {
     dec_imm(instr, p_dec_instr);
 
 #ifndef __SYNTHESIS__
-#ifdef DBG_FDE_IP
+#ifdef DBG_DECODE
     print_dec_instr(*p_dec_instr);
 #endif /* !DBG_FDE_IP! */
 #endif /* !__SYNTHESIS__! */

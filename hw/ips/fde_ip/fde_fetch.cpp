@@ -25,8 +25,11 @@ void fetch(addr_t pc, instr_t *p_ram, instr_t *p_instr) {
     *p_instr = p_ram[pc];
 
 #ifndef __SYNTHESIS__
-#ifdef DBG_FDE_IP
-    printf("[DBG] %04d: %08x\n", (int)(pc << 2), *p_instr);
-#endif /* !DBG_FDE_IP! */
+#ifdef DBG_FETCH
+    printf("[fde_fetch.fetch] %04d: %08x\n", (int)(pc << 2), *p_instr);
+#ifndef DBG_DISASSEMBLE
+    printf("\n");
+#endif /* !DBG_DISASSEMBLE! */
+#endif /* !DBG_FETCH! */
 #endif /* !__SYNTHESIS__! */
 }

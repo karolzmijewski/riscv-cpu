@@ -1,8 +1,11 @@
 #ifndef FDE_OPCODE_HPP
 #define FDE_OPCODE_HPP
 
-// opcodes 00
+// opcodes special values
 #define RET 0x8067
+#define NOP 0x13
+#define RA 0x1
+// opcodes 00
 #define LOAD 0b00000
 #define LOAD_FP 0b00001
 #define CUSTOM_0 0b00010

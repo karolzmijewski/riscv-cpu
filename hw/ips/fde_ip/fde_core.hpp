@@ -9,6 +9,8 @@
 // parameter to extend the memory
 #define RAM_ADDR_WIDTH 16
 #define RAM_SIZE (1 << RAM_ADDR_WIDTH)
+#define REG_FILE_SIZE 5
+#define REGISTER_NR (1 << REG_FILE_SIZE)
 
 // general types
 typedef ap_uint<1> bit_t;
