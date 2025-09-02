@@ -83,11 +83,6 @@ static op_type_t get_subtype_11(ap_uint<3> opcl) {
     return UNDEF_TYPE;
 }
 
-/**
- * It's a representation of main MUX (multiplexer 3*4 -> 3) logic,
- * used to decode opch, and call the appropriate sub-MUX representation
- * function to decode opcl and determine the operation type.
- */
 op_type_t get_op_type(opcode_t opcode) {
 #pragma HLS INLINE
     ap_uint<2> opch = opcode >> 3;;

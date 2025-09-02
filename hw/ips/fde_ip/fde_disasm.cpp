@@ -8,6 +8,7 @@
 #include "fde_type.hpp"
 
 void disasm(addr_t pc, instr_t instr, dec_instr_t dec_instr) {
+    printf("[fde_disasm.disasm]:\n");
     switch (dec_instr.type) {
         case R_TYPE:
             print_operation_name(dec_instr.opcode, dec_instr);

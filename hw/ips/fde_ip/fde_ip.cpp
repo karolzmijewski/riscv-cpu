@@ -32,11 +32,19 @@ void fde_ip(unsigned int start_pc, unsigned int ram[RAM_SIZE], unsigned int *p_i
 #pragma HLS INTERFACE s_axilite port=ram
 #pragma HLS INTERFACE s_axilite port=p_instr_counter
 #pragma HLS INTERFACE s_axilite port=return
+    int reg_file[REGISTER_NR];
+// The HLS ARRAY PARTITION pragma is used to partition an array into smaller arrays
+// or individual elements. This can improve parallelism and performance by allowing
+// multiple accesses to different parts of the array simultaneously rather than being
+// limited to a single access at a time.
+// The "complete" option fully partitions the array, creating individual registers
+// for each element. Consequently, the one dimensional array will be mapped on FPGA
+// flip-flops (registers), instead of block RAMs (BRAM).
+#pragma HLS ARRAY_PARTITION variable=reg_file complete dim=1
     bit_t is_running;
     addr_t pc = start_pc;
     instr_t instr;
     dec_instr_t dec_instr;
-    int reg_file[REGISTER_NR];
     unsigned int instr_counter = 0;
 
     for (int i = 0; i < REGISTER_NR; i++) {

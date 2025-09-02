@@ -5,6 +5,7 @@
 
 #ifndef __SYNTHESIS__
 #ifdef DBG_DECODE
+#include <stdio.h>
 #include "fde_print.hpp"
 #endif /* !DBG_DECODE! */
 #endif /* !__SYNTHESIS__! */
@@ -50,6 +51,7 @@ void decode(instr_t instr, dec_instr_t *p_dec_instr) {
 
 #ifndef __SYNTHESIS__
 #ifdef DBG_DECODE
+    printf("[fde_decode.decode]:\n");
     print_dec_instr(*p_dec_instr);
 #endif /* !DBG_FDE_IP! */
 #endif /* !__SYNTHESIS__! */

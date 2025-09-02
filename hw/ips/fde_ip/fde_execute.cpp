@@ -5,12 +5,19 @@
 #include "fde_opcode.hpp"
 #include "fde_execute.hpp"
 
+/**
+ * Read the values of source registers rs1 and rs2 from the register file.
+ */
 static void reg_read(int *p_reg_file, reg_nr_t rs1, reg_nr_t rs2, int *p_rs1_val, int *p_rs2_val) {
 #pragma HLS INLINE
     *p_rs1_val = p_reg_file[rs1];
     *p_rs2_val = p_reg_file[rs2];
 }
 
+/**
+ * Write the value rd_val to the register file at index rd.
+ * Register x0 (rd == 0) is hardwired to zero and cannot be modified
+ */
 static void reg_write(int *p_reg_file, reg_nr_t rd, int rd_val) {
 #pragma HLS INLINE
     if (rd != 0) {
@@ -18,10 +25,16 @@ static void reg_write(int *p_reg_file, reg_nr_t rd, int rd_val) {
     }
 }
 
+/**
+ * Get the next program counter (PC) based on the decoded instruction,
+ * current PC, and the values of source registers rs1 and rs2.
+ * For most instruction types, the next PC is simply the current PC plus one
+ * (to point to the next instruction). However, for branch (BRANCH) and jump
+ * (JR/JALR)instructions, the next PC is calculated based on the immediate value
+ * and the value in rs1. The function also considers whether a branch is taken
+ * or not for branch instructions.
+ */
 static addr_t get_next_pc(dec_instr_t dec_instr, addr_t pc, int rs1_val, bit_t branch_taken) {
-// for all types except J_TYPE,
-// the pc was defined as word pointer, so +1 will get
-// the net word (next instruction in memory)
 #pragma HLS INLINE
     switch(dec_instr.type) {
         case R_TYPE: return (addr_t)(pc + 1);
@@ -43,6 +56,19 @@ static addr_t get_next_pc(dec_instr_t dec_instr, addr_t pc, int rs1_val, bit_t b
     }
 }
 
+/**
+ * Get the result of the operation specified by the decoded instruction.
+ * The unit computes all the possible results in parallel and the  func3
+ * and func7 fields of the instruction are used to select the correct result.
+ * The switch-case structures are translated to a multiplexers by the synthesis tool.
+ * The function handles various instruction types, including arithmetic,
+ * logical, branch, and jump instructions. It uses the values of source
+ * registers rs1 and rs2, as well as immediate values, to compute the result.
+ * For branch instructions, it returns 1 if the branch condition is met,
+ * otherwise 0. For jump instructions, it returns the next PC value.
+ * For other instructions, it performs the specified operation and returns
+ * the result.
+ */
 static int get_result(int rs1_val, int rs2_val, dec_instr_t dec_instr, addr_t pc) {
 #pragma HLS INLINE
     int imm12 = ((int)dec_instr.imm) << 12; // for U_TYPE
@@ -128,6 +154,10 @@ static int get_result(int rs1_val, int rs2_val, dec_instr_t dec_instr, addr_t pc
             }
             return 0;
         case BRANCH:
+            // Return 1 if the branch is taken, otherwise 0.
+            // Signs are important as the synthesizer will not
+            // use the same order comparator for signed and unsigned
+            // comparisons (less than, greater than or equal).
             switch(dec_instr.func3) {
                 case 0b000: // BEQ
                     return (rs1_val == rs2_val);

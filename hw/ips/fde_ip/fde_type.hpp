@@ -12,6 +12,14 @@
 #define J_TYPE 6
 #define OTHER_TYPE 7
 
+/**
+ * It's a representation of main MUX (multiplexer 3*4 -> 3) logic,
+ * used to decode opch, and call the appropriate sub-MUX representation
+ * function to decode opcl and determine the operation type.
+ * M/O - Mandatory/Optional, In/Out - Input/Output.
+ * @param opcode [M][In] The opcode value to determine the operation type.
+ * @return The operation type corresponding to the given opcode.
+ */
 op_type_t get_op_type(opcode_t opcode);
 
 #endif /* !FDE_OP_FORMAT_H! */
