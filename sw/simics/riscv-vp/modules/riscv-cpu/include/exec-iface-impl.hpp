@@ -18,3 +18,38 @@
  */
 
 #pragma once
+
+#include <simics/c++/model-iface/execute.h>
+
+namespace kz::riscv::cpu::iface {
+    class exec_iface_impl: public simics::iface::ExecuteInterface {
+    public:
+        /**
+         * Starts execution of the CPU. This function is called to start/restart the CPU executing.
+         */
+        void run() override;
+        /**
+         * Stops execution of the CPU. This function is called to stop the CPU from executing.
+         * Having received stop, the processor model must stop the simulation as soon as possible
+         * and return to the Simics core. This is typically done as soon as the currently
+         * executing instruction is committed.
+         */
+        void stop() override;
+        /**
+         * Called when this CPU is switched in (becomes the current CPU).
+         * It means that if gain control of the simulation from some other execute object
+         * in the cell. This can be used to perform any necessary setup before the CPU
+         * starts executing. For example, it can be used to set up the CPU state or to
+         * allocate resources. This function is called from the simulation thread.
+         * Note that this function may be called multiple times if the CPU is switched in
+         * and out multiple times.
+         * It is guaranteed that switch_out() will be called before switch_in() is called again.
+         */
+        void switch_in() override;
+        /**
+         * Called when this CPU is switched out (loses control of the simulation).
+         * It means that some other execute object in the cell is taking control of the simulation.
+         */
+        void switch_out() override;
+    };
+} // namespace kz::riscv::cpu::iface

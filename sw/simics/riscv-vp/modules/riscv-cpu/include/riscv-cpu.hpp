@@ -22,22 +22,17 @@
 #include <array>
 #include <cstdint>
 #include <simics/cc-api.h>
-#include <simics/c++/model-iface/transaction.h>
 
 #include "reg-iface-impl.hpp"
+#include "exec-iface-impl.hpp"
 
 class riscv_cpu:
     public simics::ConfObject,
-    public simics::iface::TransactionInterface,
-    public kz::riscv::cpu::iface::reg_iface_impl {
+    public kz::riscv::cpu::iface::reg_iface_impl,
+    public kz::riscv::cpu::iface::exec_iface_impl {
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
-
-    // INTERFACES
-
-    // TransactionInterface:
-    exception_type_t issue(transaction_t *p_trans, uint64 addr) override;
 
     // ATTRIBUTES:
     // - specify configuration parameters
@@ -47,11 +42,10 @@ public:
     int value;
 
     static void init_class(simics::ConfClass *cls) {
-        // Transaction interface is required for memory-mapped devices
-        // It is a recommended interface for all memory operation replacing old io_memory interface
-        cls->add(simics::iface::TransactionInterface::Info());
         // IntRegister interface is used to expose CPU registers to debugger and other tools
         cls->add(kz::riscv::cpu::iface::reg_iface_impl::Info());
+        // Execute interface is used to control execution of the CPU
+        cls->add(kz::riscv::cpu::iface::exec_iface_impl::Info());
         cls->add(
             simics::Attribute(
                 "value", "i", "A value.",

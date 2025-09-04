@@ -18,3 +18,17 @@
  */
 
 #include "exec-iface-impl.hpp"
+
+namespace kz::riscv::cpu::iface {
+    void exec_iface_impl::run() {
+    }
+
+    void exec_iface_impl::stop() {
+    }
+
+    void exec_iface_impl::switch_in() {
+    }
+
+    void exec_iface_impl::switch_out() {
+    }
+} // namespace kz::riscv::cpu::iface

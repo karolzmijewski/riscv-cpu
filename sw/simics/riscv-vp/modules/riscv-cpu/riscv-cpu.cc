@@ -34,18 +34,6 @@ riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_ob
 
 riscv_cpu::riscv_cpu::~riscv_cpu() {}
 
-exception_type_t
-riscv_cpu::issue(transaction_t *p_trans, uint64 addr) {
-    // TODO: Handle accesses to the device here
-    if (SIM_transaction_is_read(p_trans)) {
-        SIM_LOG_INFO(2, obj(), 0, "read from offset %lld", addr);
-        SIM_set_transaction_value_le(p_trans, 0);
-    } else {
-        SIM_LOG_INFO(2, obj(), 0, "write to offset %lld", addr);
-    }
-    return Sim_PE_No_Exception;
-}
-
 // init_local() is called once when the device module is loaded into Simics
 // It is responsible to initialize device, and register the device class in module
 // The function is declared 'extern "C"' to prevent C++ name mangling
