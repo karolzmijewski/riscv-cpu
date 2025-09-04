@@ -17,40 +17,18 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include <array>
-#include <cstdint>
-#include <simics/cc-api.h>
-
-#include "reg-iface-impl.hpp"
 #include "exec-iface-impl.hpp"
 
-class riscv_cpu:
-    public simics::ConfObject,
-    public kz::riscv::cpu::iface::reg_iface_impl,
-    public kz::riscv::cpu::iface::exec_iface_impl {
-public:
-    explicit riscv_cpu(simics::ConfObjectRef conf_obj);
-    virtual ~riscv_cpu();
-
-    // ATTRIBUTES:
-    // - specify configuration parameters
-    // - saving and restoring state
-    // - inspect and control the state of model 
-    // - DO NOT USE to communicate simulation info between objects after init
-    int value;
-
-    static void init_class(simics::ConfClass *cls) {
-        // IntRegister interface is used to expose CPU registers to debugger and other tools
-        cls->add(kz::riscv::cpu::iface::reg_iface_impl::Info());
-        // Execute interface is used to control execution of the CPU
-        cls->add(kz::riscv::cpu::iface::exec_iface_impl::Info());
-        cls->add(
-            simics::Attribute(
-                "value", "i", "A value.",
-                ATTR_CLS_VAR(riscv_cpu, value)
-            )
-        );
+namespace kz::riscv::cpu::iface {
+    void exec_iface_impl::run() {
     }
-};
+
+    void exec_iface_impl::stop() {
+    }
+
+    void exec_iface_impl::switch_in() {
+    }
+
+    void exec_iface_impl::switch_out() {
+    }
+} // namespace kz::riscv::cpu::iface
