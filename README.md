@@ -11,10 +11,10 @@ based on the **RV32I** core extension. The design may be further extended in the
 RISC-V extensions and features.
 
 The repository will provide two types of simulation environments:
-- **Software simulation** – leveraging the Simics simulator provided by Intel for functional modeling and software development.
-    The [RISC-V](https://intel.github.io/tsffs/simics/reference-manual-risc-v-cpu/index.html) simple processor is provided by
-    Intel as a reference implementation. However, since the source code is not open-source, introducing architectural changes
-    is challenging.
+- **Software simulation** – leveraging Intel’s Simics simulator for functional modeling and software development.
+    Intel provides a simple [RISC-V](https://intel.github.io/tsffs/simics/reference-manual-risc-v-cpu/index.html)
+    processor as a reference implementation; however, because the source code is not open source, introducing
+    rchitectural modifications is difficult.
 - **Hardware simulation** – implemented using High-Level Synthesis (HLS) with AMD Vitis, targeting Xilinx-based FPGAs
     for hardware prototyping and performance evaluation.
 
