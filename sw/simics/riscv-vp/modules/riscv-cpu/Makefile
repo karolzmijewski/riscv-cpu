@@ -1,12 +1,12 @@
 # Makefile for the riscv-cpu module
 
-# TODO: specify the class(es) implemented in this module
+# class(es) implemented in this module
 MODULE_CLASSES = riscv_cpu
 
-# TODO: set file-names
+# set file-names
 SRC_FILES = riscv-cpu.cc
 PYTHON_FILES = module_load.py
-MODULE_CFLAGS =
+MODULE_CFLAGS := -I./include
 SIMICS_API := 7
 THREAD_SAFE := yes
 

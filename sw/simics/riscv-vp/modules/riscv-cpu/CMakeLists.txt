@@ -5,6 +5,10 @@ simics_add_module(
     SIMICS_API 7
     INIT_LOCAL
 )
+target_include_directories(
+    riscv-cpu
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 target_link_libraries(
     riscv-cpu
     PRIVATE Simics::C++
