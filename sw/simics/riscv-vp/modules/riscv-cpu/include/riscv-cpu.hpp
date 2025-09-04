@@ -24,12 +24,12 @@
 #include <simics/cc-api.h>
 #include <simics/c++/model-iface/transaction.h>
 
-#include "riscv-cpu-reg-iface-impl.hpp"
+#include "reg-iface-impl.hpp"
 
 class riscv_cpu:
     public simics::ConfObject,
     public simics::iface::TransactionInterface,
-    public riscv_cpu_reg_iface_impl {
+    public kz::riscv::cpu::iface::reg_iface_impl {
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
@@ -51,7 +51,7 @@ public:
         // It is a recommended interface for all memory operation replacing old io_memory interface
         cls->add(simics::iface::TransactionInterface::Info());
         // IntRegister interface is used to expose CPU registers to debugger and other tools
-        cls->add(riscv_cpu_reg_iface_impl::Info());
+        cls->add(kz::riscv::cpu::iface::reg_iface_impl::Info());
         cls->add(
             simics::Attribute(
                 "value", "i", "A value.",
