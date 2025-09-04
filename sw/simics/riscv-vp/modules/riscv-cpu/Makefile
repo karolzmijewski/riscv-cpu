@@ -20,7 +20,7 @@ MODULE_CLASSES = riscv_cpu
 
 # set file-names
 CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-SRC_FILES = riscv-cpu.cc reg-iface-impl.cc
+SRC_FILES = riscv-cpu.cc reg-iface-impl.cc exec-iface-impl.cc
 PYTHON_FILES = module_load.py
 MODULE_CFLAGS += -I$(CURRENT_DIR)/include
 SIMICS_API := 7
