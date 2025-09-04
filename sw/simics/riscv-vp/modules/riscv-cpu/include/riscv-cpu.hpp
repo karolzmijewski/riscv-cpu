@@ -23,52 +23,19 @@
 #include <cstdint>
 #include <simics/cc-api.h>
 #include <simics/c++/model-iface/transaction.h>
-#include <simics/c++/model-iface/int-register.h>
+
+#include "riscv-cpu-reg-iface-impl.hpp"
 
 class riscv_cpu:
     public simics::ConfObject,
     public simics::iface::TransactionInterface,
-    public simics::iface::IntRegisterInterface {
-private:
-    std::array<uint32_t, 32> regs; // x0..x31
-    uint32_t pc;
-    uint32_t mstatus, mepc, mcause, mtvec;
+    public riscv_cpu_reg_iface_impl {
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
 
     // INTERFACES
-    // IntRegisterInterface:
-    // The int_register interface is used for access to registers in a processor.
-    // It can be used to access any kind of integer register, not only the "normal"
-    // registers. This includes all kinds of control registers, hidden registers
-    // and anything else that might be useful to access as a register. The only
-    // limitation is that the register value should be representable as a 64-bit
-    // unsigned integer.
-    /**
-     * Translates a register name to its number. Returns -1 if the register does not exist.
-     */
-    int get_number(const char *name) override;
-    /**
-     * Translates a register number to its canonical name.
-     */
-    const char *get_name(int reg) override;
-    /**
-     * Reads a register value.
-     */
-    virtual uint64 read(int reg) override;
-    /**
-     * Writes a new register value.
-     */
-    virtual void write(int reg, uint64 val) override;
-    /**
-     * Returns a list of all register numbers that can be used for this object.
-     */
-    virtual attr_value_t all_registers() override;
-    /**
-     * returns information about a single register. The information return depends on the info parameter
-     */
-    virtual int register_info(int reg, ireg_info_t info) override;
+
     // TransactionInterface:
     exception_type_t issue(transaction_t *p_trans, uint64 addr) override;
 
@@ -84,7 +51,7 @@ public:
         // It is a recommended interface for all memory operation replacing old io_memory interface
         cls->add(simics::iface::TransactionInterface::Info());
         // IntRegister interface is used to expose CPU registers to debugger and other tools
-        cls->add(simics::iface::IntRegisterInterface::Info());
+        cls->add(riscv_cpu_reg_iface_impl::Info());
         cls->add(
             simics::Attribute(
                 "value", "i", "A value.",
