@@ -36,25 +36,18 @@ public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
 
-    // ATTRIBUTES:
-    // - specify configuration parameters
-    // - saving and restoring state
-    // - inspect and control the state of model 
-    // - DO NOT USE to communicate simulation info between objects after init
-    int value;
-
     static void init_class(simics::ConfClass *cls) {
         // IntRegister interface is used to expose CPU registers to debugger and other tools
         cls->add(kz::riscv::cpu::iface::reg_iface_impl::Info());
         // Execute interface is used to control execution of the CPU
         cls->add(kz::riscv::cpu::iface::exec_iface_impl::Info());
-        // DirectMemory interface is used to access memory directly
-        cls->add(kz::riscv::cpu::iface::dmem_iface_impl::Info());
-        // Add an integer attribute 'value' to the class
+        // ProcessorInfo interface is used to provide information about the CPU architecture
+        cls->add(kz::riscv::cpu::iface::proc_iface_impl::Info());
+        // Attributes
         cls->add(
             simics::Attribute(
-                "value", "i", "A value.",
-                ATTR_CLS_VAR(riscv_cpu, value)
+                "phys_mem", "o", "Physical memory space.",
+                ATTR_CLS_VAR(riscv_cpu, phys_mem)
             )
         );
     }
