@@ -25,16 +25,18 @@
 
 #include "reg-iface-impl.hpp"
 #include "exec-iface-impl.hpp"
-#include "dmem-iface-impl.hpp"
+#include "proc-iface-impl.hpp"
 
 class riscv_cpu:
     public simics::ConfObject,
     public kz::riscv::cpu::iface::reg_iface_impl,
     public kz::riscv::cpu::iface::exec_iface_impl,
-    public kz::riscv::cpu::iface::dmem_iface_impl {
+    public kz::riscv::cpu::iface::proc_iface_impl {
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
+
+    simics::ConfObjectRef phys_mem; // Physical memory space
 
     static void init_class(simics::ConfClass *cls) {
         // IntRegister interface is used to expose CPU registers to debugger and other tools

@@ -21,7 +21,7 @@
 
 namespace kz::riscv::cpu::iface {
     tuple_int_string_t proc_iface_impl::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
-        return {4, "nop"};
+        return {4, const_cast<char *>("nop")};
     }
 
     void proc_iface_impl::set_program_counter(logical_address_t pc) {
@@ -38,6 +38,10 @@ namespace kz::riscv::cpu::iface {
         block.block_start = 0;
         block.block_end = 0;
         return block;
+    }
+
+    processor_mode_t proc_iface_impl::get_processor_mode() {
+        return Sim_CPU_Mode_User;
     }
 
     int proc_iface_impl::enable_processor() {

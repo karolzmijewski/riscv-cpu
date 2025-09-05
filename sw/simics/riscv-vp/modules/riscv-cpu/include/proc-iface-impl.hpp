@@ -57,6 +57,11 @@ namespace kz::riscv::cpu::iface {
          */
         physical_block_t logical_to_physical(logical_address_t address, access_t access_type) override;
         /**
+         * Function returns the current processor mode. The return value is one of the processor_mode_t
+         * enum values.
+         */
+        processor_mode_t get_processor_mode() override;
+        /**
          * Function to enable the processor. The functions return 0 if the processor changed from
          * enabled to disabled or from disabled to enabled, and 1 if the processor did not change state.
          * The current state is returned by the get_enabled function
