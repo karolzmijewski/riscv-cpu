@@ -24,11 +24,11 @@
 
 riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
     regs.fill(0);
-    pc = 0;
     mstatus = 0;
     mepc = 0;
     mcause = 0;
     mtvec = 0;
+    pc = 0;
     phys_mem = nullptr;
 }
 

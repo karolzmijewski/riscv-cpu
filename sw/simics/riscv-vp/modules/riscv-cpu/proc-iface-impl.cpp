@@ -17,62 +17,62 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "proc-iface-impl.hpp"
+#include "riscv-cpu.hpp"
 
-namespace kz::riscv::cpu::iface {
-    tuple_int_string_t proc_iface_impl::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
-        return {4, const_cast<char *>("nop")};
-    }
 
-    void proc_iface_impl::set_program_counter(logical_address_t pc) {
-    }
+void riscv_cpu::set_program_counter(logical_address_t pc) {
+    this->pc = static_cast<uint32_t>(pc);
+}
 
-    logical_address_t proc_iface_impl::get_program_counter() {
-        return 0;
-    }
+logical_address_t riscv_cpu::get_program_counter() {
+    return static_cast<logical_address_t>(this->pc);
+}
 
-    physical_block_t proc_iface_impl::logical_to_physical(logical_address_t address, access_t access_type) {
-        physical_block_t block = {};
-        block.valid = 0;
-        block.address = 0;
-        block.block_start = 0;
-        block.block_end = 0;
-        return block;
-    }
+tuple_int_string_t riscv_cpu::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
+    return {4, const_cast<char *>("nop")};
+}
 
-    processor_mode_t proc_iface_impl::get_processor_mode() {
-        return Sim_CPU_Mode_User;
-    }
+physical_block_t riscv_cpu::logical_to_physical(logical_address_t address, access_t access_type) {
+    physical_block_t block = {};
+    block.valid = 0;
+    block.address = 0;
+    block.block_start = 0;
+    block.block_end = 0;
+    return block;
+}
 
-    int proc_iface_impl::enable_processor() {
-        return 1;
-    }
+processor_mode_t riscv_cpu::get_processor_mode() {
+    return Sim_CPU_Mode_User;
+}
 
-    int proc_iface_impl::disable_processor() {
-        return 1;
-    }
+int riscv_cpu::enable_processor() {
+    return 1;
+}
 
-    int proc_iface_impl::get_enabled() {
-        return 0;
-    }
+int riscv_cpu::disable_processor() {
+    return 1;
+}
 
-    cpu_endian_t proc_iface_impl::get_endian() {
-        return Sim_Endian_Little;
-    }
+int riscv_cpu::get_enabled() {
+    return 0;
+}
 
-    conf_object_t * proc_iface_impl::get_physical_memory() {
-        return nullptr;
-    }
+cpu_endian_t riscv_cpu::get_endian() {
+    return Sim_Endian_Little;
+}
 
-    int proc_iface_impl::get_logical_address_width() {
-        return 32;
-    }
+conf_object_t * riscv_cpu::get_physical_memory() {
+    return nullptr;
+}
 
-    int proc_iface_impl::get_physical_address_width() {
-        return 32;
-    }
+int riscv_cpu::get_logical_address_width() {
+    return 32;
+}
 
-    const char *proc_iface_impl::architecture() {
-        return "riscv";
-    }
-} // namespace kz::riscv::cpu::iface
+int riscv_cpu::get_physical_address_width() {
+    return 32;
+}
+
+const char *riscv_cpu::architecture() {
+    return "riscv";
+}

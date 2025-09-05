@@ -17,18 +17,16 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "exec-iface-impl.hpp"
+#include "riscv-cpu.hpp"
 
-namespace kz::riscv::cpu::iface {
-    void exec_iface_impl::run() {
-    }
+void riscv_cpu::run() {
+}
 
-    void exec_iface_impl::stop() {
-    }
+void riscv_cpu::stop() {
+}
 
-    void exec_iface_impl::switch_in() {
-    }
+void riscv_cpu::switch_in() {
+}
 
-    void exec_iface_impl::switch_out() {
-    }
-} // namespace kz::riscv::cpu::iface
+void riscv_cpu::switch_out() {
+}
