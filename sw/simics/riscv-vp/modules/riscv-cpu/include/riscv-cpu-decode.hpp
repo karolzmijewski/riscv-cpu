@@ -19,8 +19,11 @@
 
 #pragma once
 
-class riscv_cpu_decode {
+#include "riscv-cpu-types.hpp"
+
+class riscv_cpu_decoder {
 public:
+    kz::riscv::types::dec_instr_t *decode(kz::riscv::types::instr_t instr);
     //static void decode(uint32_t instruction);
     // static uint32_t get_opcode(uint32_t instruction);
     // static uint32_t get_rd(uint32_t instruction);

@@ -54,7 +54,19 @@ public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
 
+    /**
+     * Method is called after init_local and class constructor, it is intended to do any
+     * initialization that require the attribute values, however should avoid calling any
+     * interface methods on ther objects.
+     */
     void finalize() override;
+
+    /**
+     * Method is called at the end on initialization phases when objects are fully
+     * constructed and can participate in the simulation and reverse execution.
+     * There object can call interface methods on other objects as a part of last pahse
+     * of initialization process
+     */
     void objects_finalized() override;
 
     // TODO: remove it, signal interface was added only to
@@ -63,7 +75,6 @@ public:
     // CLI commands in a future
     void signal_raise() override;
     void signal_lower() override;
-    
 
     // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
     void release(

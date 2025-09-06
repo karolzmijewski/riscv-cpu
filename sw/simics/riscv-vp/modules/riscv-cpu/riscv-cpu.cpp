@@ -49,20 +49,9 @@ void riscv_cpu::signal_lower() {
 }
 // END OF TESTS
 
-/**
- * Method is called after init_local and class constructor, it is intended to do any
- * initialization that require the attribute values, however should avoid calling any
- * interface methods on ther objects.
- */
 void riscv_cpu::finalize() {
 }
 
-/**
- * Method is called at the end on initialization phases when objects are fully
- * constructed and can participate in the simulation and reverse execution.
- * There object can call interface methods on other objects as a part of last pahse
- * of initialization process
- */
 void riscv_cpu::objects_finalized() {
     mem_handler_ = get_mem_handler_(0x80000000, 0x100000);
 }
