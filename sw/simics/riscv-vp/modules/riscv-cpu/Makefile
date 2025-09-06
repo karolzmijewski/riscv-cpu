@@ -22,6 +22,8 @@ MODULE_CLASSES = riscv_cpu
 CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-decode.cpp \
+            riscv-cpu-encode.cpp \
+            riscv-cpu-types.cpp \
             reg-iface-impl.cpp \
             exec-iface-impl.cpp \
             proc-iface-impl.cpp \

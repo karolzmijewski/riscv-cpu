@@ -28,17 +28,17 @@ namespace kz::riscv::types {
     template<unsigned bits, typename Storage, typename Derived>
     class bits_n {
     protected:
-        using unsigned_storage_t = std::make_unsigned<Storage>;
-        using signed_storage_t = std::make_signed<Storage>;
+        Storage val;
+        using unsigned_storage_t = typename std::make_unsigned<Storage>::type;
+        using signed_storage_t = typename std::make_signed<Storage>::type;
         static_assert(bits > 0, "Bit width must be grater then 0");
         static_assert(bits <= sizeof(Storage) * 8, "Bit width cannot be larger then storage type");
-        static constexpr unsigned_storage_t mask = (bits == sizeof(Storage) *8) 
-            ? ~unsigned_storage_t(0) /* bit mask with 1 on all bits */
-            : ((unsigned_storage_t(1) << bits) - 1); /* bit mask with 1 on bits_size -1 */
+        static constexpr Storage mask = (bits == sizeof(Storage) * 8)
+            ? ~Storage(0) /* bit mask with 1 on all bits */
+            : ((Storage(1) << bits) - 1); /* bit mask with 1 on bits_size -1 */
         static const Storage apply_mask(Storage v) {
             return static_cast<Storage>(v & mask);
         }
-        Storage val;
         constexpr bits_n(Storage v): val(apply_mask(v)) {}
     public:
         constexpr bits_n(): val(0) {}
@@ -56,6 +56,35 @@ namespace kz::riscv::types {
         constexpr Derived operator-(Storage rhs) const {
             return Derived(val - rhs);
         }
+        // logic
+        constexpr Derived operator|(Storage rhs) const {
+            return Derived(apply_mask(val | rhs));
+        }
+        constexpr Derived operator|(const Derived& rhs) const {
+            return Derived(apply_mask(val | rhs.val));
+        }
+        constexpr Derived& operator|=(Storage rhs) {
+            val = apply_mask(val | rhs);
+            return static_cast<Derived&>(*this);
+        }
+        constexpr Derived& operator|=(const Derived& rhs) {
+            val = apply_mask(val | rhs.val);
+            return static_cast<Derived&>(*this);
+        }
+        constexpr Derived operator&(Storage rhs) const {
+            return Derived(apply_mask(val & rhs));
+        }
+        constexpr Derived operator&(const Derived& rhs) const {
+            return Derived(apply_mask(val & rhs.val));
+        }
+        constexpr Derived& operator&=(Storage rhs) {
+            val = apply_mask(val & rhs);
+            return static_cast<Derived&>(*this);
+        }
+        constexpr Derived& operator&=(const Derived& rhs) {
+            val = apply_mask(val & rhs.val);
+            return static_cast<Derived&>(*this);
+        }
     };
 
     template<unsigned bits>
@@ -72,13 +101,14 @@ namespace kz::riscv::types {
     private:
         using base = bits_n<bits, int64_t, int_n<bits>>;
         using unsigned_storage_t = typename base::unsigned_storage_t;
+    protected:
         static constexpr int64_t sign_extend(unsigned_storage_t v) {
             if constexpr (bits == 64) {
                 return static_cast<int64_t>(v);
             } else {
                 unsigned shift = 64 - bits;
                 // first move value to the most significant bits and get back to propagate sign
-                return static_cast<int64_t>(static_cast<int64_t>(v << shift) >> shift);
+                return (static_cast<int64_t>(v << shift)) >> shift;
             }
         }
         static constexpr int64_t apply_mask(int64_t v) {
@@ -123,12 +153,13 @@ namespace kz::riscv::types {
         reg_nr_t rs1;
         reg_nr_t rs2;
         func7_t func7;
-        opcode_t type;
+        op_type_t type;
         imm_t imm;
     };
     using dec_instr_t = dec_instr;
 
     class dec_imm {
+    public:
         bit_t instr_31;
         uint_n<6> instr_30_25;
         uint_n<4> instr_24_21;
@@ -138,4 +169,31 @@ namespace kz::riscv::types {
         bit_t instr_7;
     };
     using dec_imm_t = dec_imm;
+
+    class operation_type {
+    private:
+        static op_type_t get_subtype_00_(uint_n<3> opcl);
+        static op_type_t get_subtype_01_(uint_n<3> opcl);
+        static op_type_t get_subtype_10_(uint_n<3> opcl);
+        static op_type_t get_subtype_11_(uint_n<3> opcl);
+    public:
+        static const uint8_t UNDEF_TYPE = 0;
+        static const uint8_t R_TYPE = 1;
+        static const uint8_t I_TYPE = 2;
+        static const uint8_t S_TYPE = 3;
+        static const uint8_t B_TYPE = 4;
+        static const uint8_t U_TYPE = 5;
+        static const uint8_t J_TYPE = 6;
+        static const uint8_t OTHER_TYPE = 7;
+        /**
+         * It's a representation of main MUX (multiplexer 3*4 -> 3) logic,
+         * used to decode opch, and call the appropriate sub-MUX representation
+         * function to decode opcl and determine the operation type.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param opcode [M][In] The opcode value to determine the operation type.
+         * @return The operation type corresponding to the given opcode.
+         */
+        static op_type_t get_op_type(opcode_t opcode);
+    };
+    using operation_type_t = operation_type;
 }

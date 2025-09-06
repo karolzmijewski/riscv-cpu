@@ -22,25 +22,14 @@
 #include "riscv-cpu-types.hpp"
 
 namespace kz::riscv::core {
-    class riscv_cpu_decoder {
+    class riscv_cpu_encoder {
     private:
-        using instr_t = kz::riscv::types::instr_t;
-        using dec_instr_t = kz::riscv::types::dec_instr_t;
         using dec_imm_t = kz::riscv::types::dec_imm_t;
-        using operation_type_t = kz::riscv::types::operation_type_t;
-        void dec_instr_(instr_t instr, dec_instr_t *p_dec_instr);
-        void dec_imm_(instr_t instr, dec_instr_t *p_dec_instr);
     public:
-        /**
-         * Decode the given instruction into its components and immediate value.
-         * The function extracts fields such as opcode, destination register (rd),
-         * source registers (rs1, rs2), function codes (func3, func7),
-         * and determines the instruction type. It also decodes the immediate value
-         * based on the instruction type.
-         * M/O - Mandatory/Optional, In/Out - Input/Output.
-         * @param instr [M][In] The instruction to be decoded.
-         * @return pointer to the decoded instruction components.
-         */
-        void decode(instr_t instr, dec_instr_t *p_dec_instr);
+        static kz::riscv::types::i_imm_t enc_i_imm(dec_imm_t dec_imm);
+        static kz::riscv::types::s_imm_t enc_s_imm(dec_imm_t dec_imm);
+        static kz::riscv::types::b_imm_t enc_b_imm(dec_imm_t dec_imm);
+        static kz::riscv::types::u_imm_t enc_u_imm(dec_imm_t dec_imm);
+        static kz::riscv::types::j_imm_t enc_j_imm(dec_imm_t dec_imm);
     };
 }
