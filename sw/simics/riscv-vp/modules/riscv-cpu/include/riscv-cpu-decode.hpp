@@ -28,8 +28,8 @@ namespace kz::riscv::core {
         using dec_instr_t = kz::riscv::types::dec_instr_t;
         using dec_imm_t = kz::riscv::types::dec_imm_t;
         using operation_type_t = kz::riscv::types::operation_type_t;
-        void dec_instr_(instr_t instr, dec_instr_t *p_dec_instr);
-        void dec_imm_(instr_t instr, dec_instr_t *p_dec_instr);
+        static void dec_instr_(instr_t instr, dec_instr_t *p_dec_instr);
+        static void dec_imm_(instr_t instr, dec_instr_t *p_dec_instr);
     public:
         /**
          * Decode the given instruction into its components and immediate value.
@@ -41,6 +41,6 @@ namespace kz::riscv::core {
          * @param instr [M][In] The instruction to be decoded.
          * @return pointer to the decoded instruction components.
          */
-        void decode(instr_t instr, dec_instr_t *p_dec_instr);
+        static void decode(instr_t instr, dec_instr_t *p_dec_instr);
     };
 }

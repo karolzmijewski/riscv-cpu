@@ -21,39 +21,60 @@
 #include <simics/cc-api.h>
 #include <simics/c++/model-iface/direct-memory.h>
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-decode.hpp"
 
-riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
-    cobj_ = obj().object();
-    regs_.fill(0);
-    mstatus_ = 0;
-    mepc_ = 0;
-    mcause_ = 0;
-    mtvec_ = 0;
-    pc_ = 0;
-    subsystem_ = 0;
-}
+namespace kz::riscv::core {
+    riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
+        cobj_ = obj().object();
+        regs_.fill(0);
+        mstatus_ = 0;
+        mepc_ = 0;
+        mcause_ = 0;
+        mtvec_ = 0;
+        pc_ = 0;
+        subsystem_ = 0;
+    }
 
-riscv_cpu::riscv_cpu::~riscv_cpu() {}
+    riscv_cpu::riscv_cpu::~riscv_cpu() {}
 
-// FOR TESTS
-void riscv_cpu::signal_raise() {
-    uint8* data = read_mem_(0x0, 4);
-    SIM_LOG_INFO(
-        1, cobj_, 0,
-        "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
-        data[0], data[1], data[2], data[3]
-    );
-}
+    // FOR TESTS
+    void riscv_cpu::signal_raise() {
+        using instr_t = kz::riscv::types::instr_t;
+        using dec_instr_t = kz::riscv::types::dec_instr_t;
+        uint8* data = read_mem_(0x0, 4);
+        SIM_LOG_INFO(
+            1, cobj_, 0,
+            "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
+            data[0], data[1], data[2], data[3]
+        );
+        instr_t instr = (static_cast<instr_t>(data[0]) << 24);
+        instr |= (static_cast<instr_t>(data[1]) << 16);
+        instr |= (static_cast<instr_t>(data[2]) << 8);
+        instr |= (static_cast<instr_t>(data[3]));
+        dec_instr_t dec_instr;
+        SIM_LOG_INFO(1, cobj_, 0, "instr: '0x%x'", instr);
+        riscv_cpu_decoder::decode(instr, &dec_instr);
+        SIM_LOG_INFO(
+            1, cobj_, 0,
+            "dec_instr: opcode='0x%02x', rd='0x%02x', func3='0x%01x', "
+            "rs1='0x%02x', rs2='0x%02x', func7='0x%02x', type='0x%01x'",
+            static_cast<unsigned int>(dec_instr.opcode), static_cast<unsigned int>(dec_instr.rd),
+            static_cast<unsigned int>(dec_instr.func3), static_cast<unsigned int>(dec_instr.rs1),
+            static_cast<unsigned int>(dec_instr.rs2), static_cast<unsigned int>(dec_instr.func7),
+            static_cast<unsigned int>(dec_instr.type)
+        );
+    }
 
-void riscv_cpu::signal_lower() {
-}
-// END OF TESTS
+    void riscv_cpu::signal_lower() {
+    }
+    // END OF TESTS
 
-void riscv_cpu::finalize() {
-}
+    void riscv_cpu::finalize() {
+    }
 
-void riscv_cpu::objects_finalized() {
-    mem_handler_ = get_mem_handler_(0x80000000, 0x100000);
+    void riscv_cpu::objects_finalized() {
+        mem_handler_ = get_mem_handler_(0x80000000, 0x100000);
+    }
 }
 
 // init_local() is called once when the device module is loaded into Simics
@@ -63,7 +84,7 @@ void riscv_cpu::objects_finalized() {
 // that may be thrown during device registration
 extern "C"
 void init_local() try {
-    simics::make_class<riscv_cpu>(
+    simics::make_class<kz::riscv::core::riscv_cpu>(
             "riscv_cpu",
             "a C++ device template",
             "This is a documentation string describing the"

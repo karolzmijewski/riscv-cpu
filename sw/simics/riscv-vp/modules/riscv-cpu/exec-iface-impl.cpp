@@ -19,14 +19,16 @@
 
 #include "riscv-cpu.hpp"
 
-void riscv_cpu::run() {
-}
+namespace kz::riscv::core {
+    void riscv_cpu::run() {
+    }
 
-void riscv_cpu::stop() {
-}
+    void riscv_cpu::stop() {
+    }
 
-void riscv_cpu::switch_in() {
-}
+    void riscv_cpu::switch_in() {
+    }
 
-void riscv_cpu::switch_out() {
+    void riscv_cpu::switch_out() {
+    }
 }
