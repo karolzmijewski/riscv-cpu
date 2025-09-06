@@ -29,6 +29,13 @@ logical_address_t riscv_cpu::get_program_counter() {
 }
 
 tuple_int_string_t riscv_cpu::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
+    // For simplicity, we return a fixed instruction "nop" (no operation)
+    if (!SIM_attr_is_data(instruction_data))
+        return {0, const_cast<char *>("")};
+
+    // unsigned size = SIM_attr_data_size(instruction_data);
+    // const uint8 *bytes = SIM_attr_data(instruction_data);
+
     return {4, const_cast<char *>("nop")};
 }
 

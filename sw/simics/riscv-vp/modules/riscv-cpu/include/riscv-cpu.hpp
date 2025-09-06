@@ -26,21 +26,54 @@
 #include <simics/c++/model-iface/execute.h>
 #include <simics/c++/model-iface/int-register.h>
 #include <simics/c++/model-iface/processor-info.h>
+#include <simics/c++/model-iface/direct-memory.h>
+
+// tests
+#include <simics/c++/devs/signal.h>
 
 class riscv_cpu:
     public simics::ConfObject,
     public simics::iface::IntRegisterInterface,
     public simics::iface::ExecuteInterface,
-    public simics::iface::ProcessorInfoV2Interface {
+    public simics::iface::ProcessorInfoV2Interface,
+    public simics::iface::DirectMemoryUpdateInterface,
+    public simics::iface::SignalInterface {
 private:
+    conf_object_t *cobj;
     std::array<uint32_t, 32> regs; // x0..x31
     uint32_t pc;
     uint32_t mstatus, mepc, mcause, mtvec;
+    simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
+
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
 
-    simics::ConfObjectRef phys_mem; // Physical memory space
+    // TODO: remove it, signal interface was added only to
+    // trigger some internal actions easily during development
+    // will be replaced where needed by properly registered
+    // CLI commands in a future
+    void signal_raise() override;
+    void signal_lower() override;
+    void read_mem(physical_address_t addr, unsigned size);
+
+    // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
+    void release(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        direct_memory_ack_id_t id) override;
+    void update_permission(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        access_t lost_access,
+        access_t lost_permission,
+        access_t lost_inhibit,
+        direct_memory_ack_id_t id) override;
+    void conflicting_access(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        access_t conflicting_permission,
+        direct_memory_ack_id_t id) override;
 
     // ! ExecuteInterface (exec-iface-impl) !
     /**
@@ -126,7 +159,10 @@ public:
      *     start at zero, and a request for the entire unit including all sub-operations is encoded
      *     with sub-operation -1.
      */
-    tuple_int_string_t disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) override;
+    tuple_int_string_t disassemble(
+        generic_address_t address,
+        attr_value_t instruction_data,
+        int sub_operation) override;
     /**
      * Function translates a logical address to a physical address of the type defined by access_type.
      * The function returns a physical_block_t struct with valid bit and the address. The address is
@@ -135,7 +171,9 @@ public:
      * the translated address. The range is inclusive, so block_end should be the address of the last
      * byte of the block.
      */
-    physical_block_t logical_to_physical(logical_address_t address, access_t access_type) override;
+    physical_block_t logical_to_physical(
+        logical_address_t address,
+        access_t access_type) override;
     /**
      * Function returns the current processor mode. The return value is one of the processor_mode_t
      * enum values.
@@ -196,11 +234,16 @@ public:
         cls->add(simics::iface::ExecuteInterface::Info());
         // ProcessorInfo interface is used to provide information about the CPU architecture
         cls->add(simics::iface::ProcessorInfoV2Interface::Info());
+        // MemoryUpdate interface is used to control direct access to memory.
+        // Every device that uses the direct_memory interface to access memory must implement this interface.
+        cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
+        // FOR TESTS
+        cls->add(simics::iface::SignalInterface::Info());
         // Attributes
         cls->add(
             simics::Attribute(
                 "phys_mem", "o", "Physical memory space.",
-                ATTR_CLS_VAR(riscv_cpu, phys_mem)
+                ATTR_CLS_VAR(riscv_cpu, phys_mem_)
             )
         );
     }
