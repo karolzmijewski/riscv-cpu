@@ -21,11 +21,11 @@
 
 
 void riscv_cpu::set_program_counter(logical_address_t pc) {
-    this->pc = static_cast<uint32_t>(pc);
+    pc_ = static_cast<uint32_t>(pc);
 }
 
 logical_address_t riscv_cpu::get_program_counter() {
-    return static_cast<logical_address_t>(this->pc);
+    return static_cast<logical_address_t>(pc_);
 }
 
 tuple_int_string_t riscv_cpu::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {

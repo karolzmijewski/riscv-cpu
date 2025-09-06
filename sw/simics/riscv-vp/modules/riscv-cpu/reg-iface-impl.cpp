@@ -52,14 +52,14 @@ const char *riscv_cpu::get_name(int reg) {
 
 uint64 riscv_cpu::read(int reg) {
     if (reg >= 0 && reg < 32) {
-        return regs[reg];
+        return regs_[reg];
     }
     switch (reg) {
-        case 32: return pc;
-        case 33: return mstatus;
-        case 34: return mepc;
-        case 35: return mcause;
-        case 36: return mtvec;
+        case 32: return pc_;
+        case 33: return mstatus_;
+        case 34: return mepc_;
+        case 35: return mcause_;
+        case 36: return mtvec_;
         default:
             throw std::out_of_range("Invalid register number");
     }
@@ -68,16 +68,16 @@ uint64 riscv_cpu::read(int reg) {
 void riscv_cpu::write(int reg, uint64 val) {
     if (reg >= 0 && reg < 32) {
         if (reg != 0) { // x0 is hardwired to zero
-            regs[reg] = static_cast<uint32_t>(val);
+            regs_[reg] = static_cast<uint32_t>(val);
         }
         return;
     }
     switch (reg) {
-        case 32: pc = static_cast<uint32_t>(val); break;
-        case 33: mstatus = static_cast<uint32_t>(val); break;
-        case 34: mepc = static_cast<uint32_t>(val); break;
-        case 35: mcause = static_cast<uint32_t>(val); break;
-        case 36: mtvec = static_cast<uint32_t>(val); break;
+        case 32: pc_ = static_cast<uint32_t>(val); break;
+        case 33: mstatus_ = static_cast<uint32_t>(val); break;
+        case 34: mepc_ = static_cast<uint32_t>(val); break;
+        case 35: mcause_ = static_cast<uint32_t>(val); break;
+        case 36: mtvec_ = static_cast<uint32_t>(val); break;
         default:
             throw std::out_of_range("Invalid register number");
     }
@@ -86,13 +86,13 @@ void riscv_cpu::write(int reg, uint64 val) {
 attr_value_t riscv_cpu::all_registers() {
     attr_value_t result = SIM_alloc_attr_dict(36 + 1);
     for (int i = 0; i < 32; ++i) {
-        SIM_attr_dict_set_item(&result, i, SIM_make_attr_string(get_name(i)), SIM_make_attr_uint64(regs[i]));
+        SIM_attr_dict_set_item(&result, i, SIM_make_attr_string(get_name(i)), SIM_make_attr_uint64(regs_[i]));
     }
-    SIM_attr_dict_set_item(&result, 32, SIM_make_attr_string("pc"), SIM_make_attr_uint64(pc));
-    SIM_attr_dict_set_item(&result, 33, SIM_make_attr_string("mstatus"), SIM_make_attr_uint64(mstatus));
-    SIM_attr_dict_set_item(&result, 34, SIM_make_attr_string("mepc"), SIM_make_attr_uint64(mepc));
-    SIM_attr_dict_set_item(&result, 35, SIM_make_attr_string("mcause"), SIM_make_attr_uint64(mcause));
-    SIM_attr_dict_set_item(&result, 36, SIM_make_attr_string("mtvec"), SIM_make_attr_uint64(mtvec));
+    SIM_attr_dict_set_item(&result, 32, SIM_make_attr_string("pc"), SIM_make_attr_uint64(pc_));
+    SIM_attr_dict_set_item(&result, 33, SIM_make_attr_string("mstatus"), SIM_make_attr_uint64(mstatus_));
+    SIM_attr_dict_set_item(&result, 34, SIM_make_attr_string("mepc"), SIM_make_attr_uint64(mepc_));
+    SIM_attr_dict_set_item(&result, 35, SIM_make_attr_string("mcause"), SIM_make_attr_uint64(mcause_));
+    SIM_attr_dict_set_item(&result, 36, SIM_make_attr_string("mtvec"), SIM_make_attr_uint64(mtvec_));
     return result;
 }
 

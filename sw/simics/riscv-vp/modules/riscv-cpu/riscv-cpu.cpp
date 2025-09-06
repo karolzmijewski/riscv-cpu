@@ -23,46 +23,49 @@
 #include "riscv-cpu.hpp"
 
 riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
-    cobj = obj().object();
-    regs.fill(0);
-    mstatus = 0;
-    mepc = 0;
-    mcause = 0;
-    mtvec = 0;
-    pc = 0;
+    cobj_ = obj().object();
+    regs_.fill(0);
+    mstatus_ = 0;
+    mepc_ = 0;
+    mcause_ = 0;
+    mtvec_ = 0;
+    pc_ = 0;
+    subsystem_ = 0;
 }
+
+riscv_cpu::riscv_cpu::~riscv_cpu() {}
 
 // FOR TESTS
-void riscv_cpu::read_mem(physical_address_t addr, unsigned size) {
-    direct_memory_lookup_t dml = phys_mem_.iface().lookup(cobj, addr, size, Sim_Access_Read);
-    SIM_LOG_INFO(
-        1, cobj, 0,
-        "direct memory lookup: target='%s', offs='%llu', access='%d'",
-        SIM_object_name(dml.target), dml.offs, dml.access
-    );
-    simics::Connect<simics::iface::DirectMemoryInterface> dm_iface;
-    dm_iface.set(dml.target);
-    direct_memory_handle_t mem_handler = dm_iface.iface().get_handle(cobj, 0, 0, 4);
-    direct_memory_t dm = dm_iface.iface().request(mem_handler, Sim_Access_Read, Sim_Access_Write);
-    SIM_LOG_INFO(
-        1, cobj, 0,
-        "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
-        dm.data[0], dm.data[1], dm.data[2], dm.data[3]
-    );
-    //const direct_memory_interface_t *dm_iface = SIM_C_GET_INTERFACE(dml.target, direct_memory);
-    //dm_iface->get_handle(cobj, cobj, 0, 0, size);
-}
-
 void riscv_cpu::signal_raise() {
-    read_mem(0x80000000, 0x100000);
+    uint8* data = read_mem_(0x0, 4);
+    SIM_LOG_INFO(
+        1, cobj_, 0,
+        "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
+        data[0], data[1], data[2], data[3]
+    );
 }
 
 void riscv_cpu::signal_lower() {
 }
-
 // END OF TESTS
 
-riscv_cpu::riscv_cpu::~riscv_cpu() {}
+/**
+ * Method is called after init_local and class constructor, it is intended to do any
+ * initialization that require the attribute values, however should avoid calling any
+ * interface methods on ther objects.
+ */
+void riscv_cpu::finalize() {
+}
+
+/**
+ * Method is called at the end on initialization phases when objects are fully
+ * constructed and can participate in the simulation and reverse execution.
+ * There object can call interface methods on other objects as a part of last pahse
+ * of initialization process
+ */
+void riscv_cpu::objects_finalized() {
+    mem_handler_ = get_mem_handler_(0x80000000, 0x100000);
+}
 
 // init_local() is called once when the device module is loaded into Simics
 // It is responsible to initialize device, and register the device class in module

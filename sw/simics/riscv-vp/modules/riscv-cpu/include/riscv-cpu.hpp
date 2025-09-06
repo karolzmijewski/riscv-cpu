@@ -39,15 +39,23 @@ class riscv_cpu:
     public simics::iface::DirectMemoryUpdateInterface,
     public simics::iface::SignalInterface {
 private:
-    conf_object_t *cobj;
-    std::array<uint32_t, 32> regs; // x0..x31
-    uint32_t pc;
-    uint32_t mstatus, mepc, mcause, mtvec;
+    // attributes
+    conf_object_t *cobj_;
+    uint64_t subsystem_;
+    std::array<uint32_t, 32> regs_; // x0..x31
+    uint32_t pc_;
+    uint32_t mstatus_, mepc_, mcause_, mtvec_;
+    direct_memory_lookup_t mem_handler_;
     simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
-
+    // methods
+    direct_memory_lookup_t get_mem_handler_(physical_address_t addr, unsigned size);
+    uint8 *read_mem_(uint32_t addr, unsigned size);
 public:
     explicit riscv_cpu(simics::ConfObjectRef conf_obj);
     virtual ~riscv_cpu();
+
+    void finalize() override;
+    void objects_finalized() override;
 
     // TODO: remove it, signal interface was added only to
     // trigger some internal actions easily during development
@@ -55,7 +63,7 @@ public:
     // CLI commands in a future
     void signal_raise() override;
     void signal_lower() override;
-    void read_mem(physical_address_t addr, unsigned size);
+    
 
     // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
     void release(
