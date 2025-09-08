@@ -45,7 +45,7 @@ namespace kz::riscv::core {
         uint8* data = read_mem_(0x0, 4);
         SIM_LOG_INFO(
             1, cobj_, 0,
-            "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
+            "direct memory: data[0]='0x%02x', data[1]='0x%02x', data[2]='0x%02x', data[3]='0x%02x'",
             data[0], data[1], data[2], data[3]
         );
         instr_t instr = (static_cast<instr_t>(data[3]) << 24);
@@ -53,7 +53,7 @@ namespace kz::riscv::core {
         instr |= (static_cast<instr_t>(data[1]) << 8);
         instr |= (static_cast<instr_t>(data[0]));
         dec_instr_t dec_instr;
-        SIM_LOG_INFO(1, cobj_, 0, "instr: '0x%x'", instr);
+        SIM_LOG_INFO(1, cobj_, 0, "instr: '0x%04x'", instr);
         riscv_cpu_decoder::decode(instr, &dec_instr);
         SIM_LOG_INFO(
             1, cobj_, 0,
