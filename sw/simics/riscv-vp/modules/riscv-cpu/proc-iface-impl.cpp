@@ -69,7 +69,7 @@ namespace kz::riscv::core {
     }
 
     conf_object_t * riscv_cpu::get_physical_memory() {
-        return nullptr;
+        return phys_mem_;
     }
 
     int riscv_cpu::get_logical_address_width() {
@@ -83,4 +83,4 @@ namespace kz::riscv::core {
     const char *riscv_cpu::architecture() {
         return "riscv";
     }
-}
+} /* ! kz::riscv::core ! */

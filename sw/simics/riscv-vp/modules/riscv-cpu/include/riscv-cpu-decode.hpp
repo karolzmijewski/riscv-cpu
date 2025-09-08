@@ -43,4 +43,4 @@ namespace kz::riscv::core {
          */
         static void decode(instr_t instr, dec_instr_t *p_dec_instr);
     };
-}
+} /* ! kz::riscv::core ! */

@@ -67,4 +67,4 @@ namespace kz::riscv::core {
         enc_j_imm_val |= ((j_imm_t)dec_imm.instr_24_21);
         return enc_j_imm_val;
     }
-}
+} /* ! kz::riscv::core ! */

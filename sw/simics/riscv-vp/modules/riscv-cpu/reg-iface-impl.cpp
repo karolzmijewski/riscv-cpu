@@ -18,6 +18,7 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-conf.hpp"
 
 namespace kz::riscv::core {
     int riscv_cpu::get_number(const char *name) {
@@ -29,7 +30,7 @@ namespace kz::riscv::core {
         if (name[0] == 'x') {
             char *endptr;
             long idx = strtol(name + 1, &endptr, 10);
-            if (*endptr == '\0' && idx >= 0 && idx < 32) {
+            if (*endptr == '\0' && idx >= 0 && idx < RV32I_GP_REG_NUM) {
                 return static_cast<int>(idx);
             }
         }
@@ -43,7 +44,7 @@ namespace kz::riscv::core {
         if (reg == 34) return "mepc";
         if (reg == 35) return "mcause";
         if (reg == 36) return "mtvec";
-        if (reg >= 0 && reg < 32) {
+        if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             snprintf(buf, sizeof(buf), "x%d", reg);
             return buf;
         }
@@ -51,7 +52,7 @@ namespace kz::riscv::core {
     }
 
     uint64 riscv_cpu::read(int reg) {
-        if (reg >= 0 && reg < 32) {
+        if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             return regs_[reg];
         }
         switch (reg) {
@@ -66,7 +67,7 @@ namespace kz::riscv::core {
     }
 
     void riscv_cpu::write(int reg, uint64 val) {
-        if (reg >= 0 && reg < 32) {
+        if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             if (reg != 0) { // x0 is hardwired to zero
                 regs_[reg] = static_cast<uint32_t>(val);
             }
@@ -84,27 +85,23 @@ namespace kz::riscv::core {
     }
 
     attr_value_t riscv_cpu::all_registers() {
-        attr_value_t result = SIM_alloc_attr_dict(36 + 1);
-        for (int i = 0; i < 32; ++i) {
+        attr_value_t result = SIM_alloc_attr_list(ALL_REGS_NUM);
+
+        for (int i = 0; i < ALL_REGS_NUM; ++i) {
+            SIM_attr_list_set_item(&result, i,  SIM_make_attr_uint64(i));
             SIM_attr_dict_set_item(&result, i, SIM_make_attr_string(get_name(i)), SIM_make_attr_uint64(regs_[i]));
         }
-        SIM_attr_dict_set_item(&result, 32, SIM_make_attr_string("pc"), SIM_make_attr_uint64(pc_));
-        SIM_attr_dict_set_item(&result, 33, SIM_make_attr_string("mstatus"), SIM_make_attr_uint64(mstatus_));
-        SIM_attr_dict_set_item(&result, 34, SIM_make_attr_string("mepc"), SIM_make_attr_uint64(mepc_));
-        SIM_attr_dict_set_item(&result, 35, SIM_make_attr_string("mcause"), SIM_make_attr_uint64(mcause_));
-        SIM_attr_dict_set_item(&result, 36, SIM_make_attr_string("mtvec"), SIM_make_attr_uint64(mtvec_));
         return result;
     }
 
     int riscv_cpu::register_info(int reg, ireg_info_t info) {
-        // For simplicity, we only provide basic info
         switch (info) {
             case Sim_RegInfo_Catchable:
-                if (reg >= 0 && reg < 32) return 4; // x0..x31 are 32-bit
-                if (reg >= 32 && reg <= 36) return 4; // pc, mstatus, mepc, mcause, mtvec are 32-bit
+                if (reg >= 0 && reg < RV32I_GP_REG_NUM) return 0; // x0..x31 are 32-bit
+                if (reg >= RV32I_GP_REG_NUM && reg <= ALL_REGS_NUM) return 0; // pc, mstatus, mepc, mcause, mtvec are 32-bit
                 return -1;
             default:
                 return -1; // Unsupported info type
         }
     }
-}
+} /* ! kz::riscv::core ! */

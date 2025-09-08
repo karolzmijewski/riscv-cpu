@@ -21,10 +21,9 @@
 
 #include <cstdint>
 #include <type_traits>
+#include "riscv-cpu-conf.hpp"
 
 namespace kz::riscv::types {
-    constexpr unsigned RAM_ADDR_WIDTH = 16;
-
     template<unsigned bits, typename Storage, typename Derived>
     class bits_n {
     protected:
@@ -128,7 +127,7 @@ namespace kz::riscv::types {
 
     // basic types
     using instr_t = unsigned int;
-    using addr_t = uint_n<RAM_ADDR_WIDTH>;
+    using addr_t = uint_n<kz::riscv::core::RAM_ADDR_WIDTH>;
     using op_type_t = uint_n<3>;
 
     // instr frame fileds
@@ -196,4 +195,48 @@ namespace kz::riscv::types {
         static op_type_t get_op_type(opcode_t opcode);
     };
     using operation_type_t = operation_type;
-}
+
+    class operation_code {
+    public:
+        // opcodes special values
+        static const uint8_t NOP = 0x13;
+        static const uint8_t RA = 0x1;
+        // opcodes 00
+        static const uint8_t LOAD = 0b00000;
+        static const uint8_t LOAD_FP = 0b00001;
+        static const uint8_t CUSTOM_0 = 0b00010;
+        static const uint8_t MISC_MEM = 0b00011;
+        static const uint8_t OP_IMM = 0b00100;
+        static const uint8_t AUIPC = 0b00101;
+        static const uint8_t OP_IMM_32 = 0b00110;
+        static const uint8_t RV48_0 = 0b00111;
+        // opcodes 01
+        static const uint8_t STORE = 0b01000;
+        static const uint8_t STORE_FP = 0b01001;
+        static const uint8_t CUSTOM_1 = 0b01010;
+        static const uint8_t AMO = 0b01011;
+        static const uint8_t OP = 0b01100;
+        static const uint8_t LUI = 0b01101;
+        static const uint8_t OP_32 = 0b01110;
+        static const uint8_t RV_64 = 0b01111;
+        // opcodes 10
+        static const uint8_t MADD = 0b10000;
+        static const uint8_t MSUB = 0b10001;
+        static const uint8_t NMSUB = 0b10010;
+        static const uint8_t NMADD = 0b10011;
+        static const uint8_t OP_FP = 0b10100;
+        static const uint8_t RSVD_0 = 0b10101;
+        static const uint8_t CUSTOM_2_RV128 = 0b10110;
+        static const uint8_t RV48_1 = 0b10111;
+        // opcodes 11
+        static const uint8_t BRANCH = 0b11000;
+        static const uint8_t JALR = 0b11001;
+        static const uint8_t RSVD_1 = 0b11010;
+        static const uint8_t JAL = 0b11011;
+        static const uint8_t SYSTEM = 0b11100;
+        static const uint8_t RSVD_2 = 0b11101;
+        static const uint8_t CUSTOM_3_RV128 = 0b11110;
+        static const uint8_t RV_80 = 0b11111;
+    };
+    using operation_code_t = operation_code;
+} /* ! kz::riscv::types ! */

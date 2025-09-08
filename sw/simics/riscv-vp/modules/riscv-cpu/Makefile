@@ -23,10 +23,12 @@ CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-decode.cpp \
             riscv-cpu-encode.cpp \
+            riscv-cpu-disasm.cpp \
             riscv-cpu-types.cpp \
             reg-iface-impl.cpp \
             exec-iface-impl.cpp \
             proc-iface-impl.cpp \
+            proc-cli-iface-impl.cpp \
             dmem-iface-impl.cpp
 PYTHON_FILES = module_load.py
 MODULE_CFLAGS += -I$(CURRENT_DIR)/include

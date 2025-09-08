@@ -17,18 +17,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "riscv-cpu.hpp"
+#pragma once
+
+#include <cstdint>
 
 namespace kz::riscv::core {
-    void riscv_cpu::run() {
-    }
-
-    void riscv_cpu::stop() {
-    }
-
-    void riscv_cpu::switch_in() {
-    }
-
-    void riscv_cpu::switch_out() {
-    }
-} /* ! kz::riscv::core ! */
+    static const uint8_t ALL_REGS_NUM = 37;
+    static const uint8_t RV32I_GP_REG_NUM = 32;
+    static const uint8_t RAM_ADDR_WIDTH = 16;
+}

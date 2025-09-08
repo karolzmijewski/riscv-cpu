@@ -28,6 +28,8 @@
 #include <simics/c++/model-iface/processor-info.h>
 #include <simics/c++/model-iface/direct-memory.h>
 
+#include "riscv-cpu-conf.hpp"
+
 // tests
 #include <simics/c++/devs/signal.h>
 
@@ -37,13 +39,14 @@ namespace kz::riscv::core {
         public simics::iface::IntRegisterInterface,
         public simics::iface::ExecuteInterface,
         public simics::iface::ProcessorInfoV2Interface,
+        public simics::iface::ProcessorCliInterface,
         public simics::iface::DirectMemoryUpdateInterface,
         public simics::iface::SignalInterface {
     private:
         // attributes
         conf_object_t *cobj_;
         uint64_t subsystem_;
-        std::array<uint32_t, 32> regs_; // x0..x31
+        std::array<uint32_t, RV32I_GP_REG_NUM> regs_; // x0..x31
         uint32_t pc_;
         uint32_t mstatus_, mepc_, mcause_, mtvec_;
         direct_memory_lookup_t mem_handler_;
@@ -77,6 +80,62 @@ namespace kz::riscv::core {
         void signal_raise() override;
         void signal_lower() override;
 
+        // ! ProcessorCliInterface (proc-cli-iface-impl) !
+        /**
+         * Method is used for disassemble command as well as to disassemble the next
+         * instruction to be executed, when control is retirned to the CLI prompt.
+         * @param add_prefix selects the address type of the address paramater, whether
+         *     it is a physical address ("p"), a linear address ("l"), or virtual address ("v"),
+         *     just as returned from "get_address_prefix"
+         * @param address the program counter for instruction to disassemble
+         * @param print_cpu if non-zero, then the name of the processor should be included
+         *     first in disassembly line.
+         * @param mnemonic is used to print exception or interrupt information as returned by the
+         *    "get_pending_exception_string" function.
+         * @return a tuple with length of instruction in bytes ad the disassembly string.
+         */
+        tuple_int_string_t get_disassembly(
+            const char *addr_prefix,
+            generic_address_t address,
+            bool print_cpu,
+            const char *mnemonic) override;
+        /**
+         * Method returnes the string to output in the CLI for the "print-processor-registers"
+         * @param all flag correcponding to the -all switch to the print-processor-registers command.
+         * @return string with registers info.
+         */
+        char *get_pregs(bool all) override;
+        /**
+         * Method used by the "stepi" command when the "-r" flag is used.
+         * @return list of register names, where each register in that list will be read through the
+         * "int_register" interface before and after an instruction.
+         */
+        attr_value_t get_diff_regs() override;
+        /**
+         * Method called before the disassembly to find out if the next step will not be an
+         * instruction, but rather a take exception or interrupt. The function should inspect the
+         * given cpu and return NULL if the next step will be the execution of the instruction at
+         * the current program counter.
+         * @return If the next step will instead be handling of the exception or interrupt, then
+         * saying that should be returned.
+         */
+        char *get_pending_exception_string() override;
+        /**
+         * Method returns a string with the default address prefix for memory related commands.
+         * Simics defines the generic prefixes "v" for virtual, "l" for linear, "p" for physical.
+         * The default is set to "v".
+         * @return address type identifier (prefix: v/l/p)
+         */
+        char *get_address_prefix() override;
+        /**
+         * Method translates an address to a physical address. If translate_to_physical is NULL
+         * then the only allowed address prefixes are "v" (virtual) and "p" (physical), and then
+         * "logical_to_physical" from "processor_info" interface will be used to translate
+         * virtual addresses.
+         */
+        physical_block_t translate_to_physical(
+            const char *prefix,
+            generic_address_t address) override;
         // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
         void release(
             conf_object_t *target,
@@ -254,6 +313,8 @@ namespace kz::riscv::core {
             cls->add(simics::iface::ExecuteInterface::Info());
             // ProcessorInfo interface is used to provide information about the CPU architecture
             cls->add(simics::iface::ProcessorInfoV2Interface::Info());
+            // ProcessorCli interface is used to provide CLI API for basic interaction with CPU model
+            cls->add(simics::iface::ProcessorCliInterface::Info());
             // MemoryUpdate interface is used to control direct access to memory.
             // Every device that uses the direct_memory interface to access memory must implement this interface.
             cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
@@ -268,4 +329,4 @@ namespace kz::riscv::core {
             );
         }
     };
-}
+} /* ! kz::riscv::core ! */

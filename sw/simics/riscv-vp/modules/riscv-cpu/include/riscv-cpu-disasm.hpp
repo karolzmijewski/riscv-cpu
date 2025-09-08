@@ -17,18 +17,26 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "riscv-cpu.hpp"
+#pragma once
+
+#include <string>
+#include "riscv-cpu-types.hpp"
 
 namespace kz::riscv::core {
-    void riscv_cpu::run() {
-    }
-
-    void riscv_cpu::stop() {
-    }
-
-    void riscv_cpu::switch_in() {
-    }
-
-    void riscv_cpu::switch_out() {
-    }
+    class riscv_cpu_disasm {
+    private:
+        using op_type_t = kz::riscv::types::op_type_t;
+        using opcode_t = kz::riscv::types::opcode_t;
+        using reg_nr_t = kz::riscv::types::reg_nr_t;
+        using dec_instr_t = kz::riscv::types::dec_instr_t;
+        using operation_type_t = kz::riscv::types::operation_type_t;
+        using operation_code_t = kz::riscv::types::operation_code_t;
+        using addr_t = kz::riscv::types::addr_t;
+    public:
+        static std::string get_type(op_type_t type);
+        static std::string get_opcode(opcode_t opcode);
+        static std::string get_reg_name(reg_nr_t reg_nr, bool symb=true);
+        static std::string get_mnemonic(opcode_t opcode, dec_instr_t dec_instr);
+        static std::string disasm(addr_t pc, dec_instr_t dec_instr);
+    };
 } /* ! kz::riscv::core ! */

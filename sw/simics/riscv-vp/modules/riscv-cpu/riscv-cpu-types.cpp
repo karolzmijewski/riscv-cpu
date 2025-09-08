@@ -23,14 +23,14 @@
 namespace kz::riscv::types {
     op_type_t operation_type::get_subtype_00_(uint_n<3> opcl) {
         switch(opcl) {
-            case 0b000: return S_TYPE; // STORE
-            case 0b001: return OTHER_TYPE; // STORE_FP
-            case 0b010: return OTHER_TYPE; // CUSTOM_1
-            case 0b011: return OTHER_TYPE; // AMO
-            case 0b100: return R_TYPE; // OP
-            case 0b101: return U_TYPE; // LUI
-            case 0b110: return OTHER_TYPE; // OP_32
-            case 0b111: return OTHER_TYPE; // RV_64
+            case 0b000: return I_TYPE; // LOAD
+            case 0b001: return OTHER_TYPE; // LOAD_FP
+            case 0b010: return OTHER_TYPE; // CUSTOM_0
+            case 0b011: return OTHER_TYPE; // MISC_MEM
+            case 0b100: return I_TYPE; // OP_IMM
+            case 0b101: return U_TYPE; // AUIPC
+            case 0b110: return OTHER_TYPE; // OP_IMM_32
+            case 0b111: return OTHER_TYPE; // RV_48_0
         }
         return UNDEF_TYPE;
     }
@@ -88,4 +88,4 @@ namespace kz::riscv::types {
         }
         return UNDEF_TYPE;
     }
-}
+} /* ! kz::riscv::types ! */

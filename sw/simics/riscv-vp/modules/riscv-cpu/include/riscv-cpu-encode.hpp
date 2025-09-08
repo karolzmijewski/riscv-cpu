@@ -32,4 +32,4 @@ namespace kz::riscv::core {
         static kz::riscv::types::u_imm_t enc_u_imm(dec_imm_t dec_imm);
         static kz::riscv::types::j_imm_t enc_j_imm(dec_imm_t dec_imm);
     };
-}
+} /* ! kz::riscv::core ! */

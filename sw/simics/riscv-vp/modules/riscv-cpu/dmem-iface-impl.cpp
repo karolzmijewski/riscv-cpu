@@ -68,4 +68,4 @@ namespace kz::riscv::core {
         direct_memory_ack_id_t id) {
         // TBD
     }
-}
+} /* ! kz::riscv::core ! */

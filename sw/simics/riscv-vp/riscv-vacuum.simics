@@ -1,0 +1,10 @@
+run-command-file "targets/vacuum/vacuum.simics"
+
+@SIM_create_object("clock", "clk", freq_mhz=400)
+@SIM_create_object("riscv_cpu", "rcpu", phys_mem=conf.phys_mem, queue=conf.clk)
+
+phys_mem.map
+phys_mem.load-binary filename = ..\..\..\tests\test_op_imm_0.elf offset = 0x10000000
+phys_mem.x address = 0x10000000 size = 100
+
+#@conf.rcpu.iface.signal.signal_raise()

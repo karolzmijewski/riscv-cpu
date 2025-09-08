@@ -57,4 +57,4 @@ namespace kz::riscv::core {
         dec_instr_(instr, p_dec_instr);
         dec_imm_(instr, p_dec_instr);
     }
-}
+} /* ! kz::riscv::core ! */

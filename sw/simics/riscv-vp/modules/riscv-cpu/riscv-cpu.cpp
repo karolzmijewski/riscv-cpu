@@ -22,6 +22,7 @@
 #include <simics/c++/model-iface/direct-memory.h>
 #include "riscv-cpu.hpp"
 #include "riscv-cpu-decode.hpp"
+#include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
     riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
@@ -47,10 +48,10 @@ namespace kz::riscv::core {
             "direct memory: data[0]='0x%x', data[1]='0x%x', data[2]='0x%x', data[3]='0x%x'",
             data[0], data[1], data[2], data[3]
         );
-        instr_t instr = (static_cast<instr_t>(data[0]) << 24);
-        instr |= (static_cast<instr_t>(data[1]) << 16);
-        instr |= (static_cast<instr_t>(data[2]) << 8);
-        instr |= (static_cast<instr_t>(data[3]));
+        instr_t instr = (static_cast<instr_t>(data[3]) << 24);
+        instr |= (static_cast<instr_t>(data[2]) << 16);
+        instr |= (static_cast<instr_t>(data[1]) << 8);
+        instr |= (static_cast<instr_t>(data[0]));
         dec_instr_t dec_instr;
         SIM_LOG_INFO(1, cobj_, 0, "instr: '0x%x'", instr);
         riscv_cpu_decoder::decode(instr, &dec_instr);
@@ -63,6 +64,8 @@ namespace kz::riscv::core {
             static_cast<unsigned int>(dec_instr.rs2), static_cast<unsigned int>(dec_instr.func7),
             static_cast<unsigned int>(dec_instr.type)
         );
+        std::string disasm_instr = riscv_cpu_disasm::disasm(0, dec_instr);
+        SIM_LOG_INFO(1, cobj_, 0, "disassembled: %s", disasm_instr.c_str());
     }
 
     void riscv_cpu::signal_lower() {
@@ -73,9 +76,9 @@ namespace kz::riscv::core {
     }
 
     void riscv_cpu::objects_finalized() {
-        mem_handler_ = get_mem_handler_(0x80000000, 0x100000);
+        mem_handler_ = get_mem_handler_(0x10000000, 0x10000000);
     }
-}
+} /* ! kz::riscv::core ! */
 
 // init_local() is called once when the device module is loaded into Simics
 // It is responsible to initialize device, and register the device class in module
