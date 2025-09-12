@@ -101,11 +101,14 @@ namespace kz::riscv::core {
     }
 
     physical_block_t riscv_cpu::logical_to_physical(logical_address_t address, access_t access_type) {
+        // So far no MMu no paging, direct mapping. The logical and physical address are the same.
+        // The block is a single address, no range. This is standard for simple CPUs or when running
+        // in machine mode without virtual memory.
         physical_block_t block = {};
-        block.valid = 0;
-        block.address = 0;
-        block.block_start = 0;
-        block.block_end = 0;
+        block.valid = 1; // Mark as valid mapping
+        block.address = address; // Direct mapping
+        block.block_start = address; // Start of the block (single address)
+        block.block_end = address + 3; // Assuming 4-byte access
         return block;
     }
 
@@ -122,7 +125,7 @@ namespace kz::riscv::core {
     }
 
     int riscv_cpu::get_enabled() {
-        return 0;
+        return 1;
     }
 
     cpu_endian_t riscv_cpu::get_endian() {
@@ -134,11 +137,11 @@ namespace kz::riscv::core {
     }
 
     int riscv_cpu::get_logical_address_width() {
-        return 32;
+        return RAM_ADDR_WIDTH;
     }
 
     int riscv_cpu::get_physical_address_width() {
-        return 32;
+        return RAM_ADDR_WIDTH;
     }
 
     const char *riscv_cpu::architecture() {
