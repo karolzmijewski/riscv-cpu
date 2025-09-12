@@ -18,6 +18,10 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-conf.hpp"
+#include "riscv-cpu-types.hpp"
+#include "riscv-cpu-decode.hpp"
+#include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
     void riscv_cpu::set_program_counter(logical_address_t pc) {
@@ -29,14 +33,71 @@ namespace kz::riscv::core {
     }
 
     tuple_int_string_t riscv_cpu::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
-        // For simplicity, we return a fixed instruction "nop" (no operation)
-        if (!SIM_attr_is_data(instruction_data))
-            return {0, const_cast<char *>("")};
-
-        // unsigned size = SIM_attr_data_size(instruction_data);
-        // const uint8 *bytes = SIM_attr_data(instruction_data);
-
-        return {4, const_cast<char *>("nop")};
+        strbuf_t result_sb = sb_new("");
+        // set type aliases
+        using addr_t = kz::riscv::types::addr_t;
+        using instr_t = kz::riscv::types::instr_t;
+        using dec_instr_t = kz::riscv::types::dec_instr_t;
+        using operation_code_t = kz::riscv::types::operation_code_t;
+        // check instruction data
+        if (!SIM_attr_is_data(instruction_data)) {
+            SIM_LOG_INFO(
+                Sim_Log_Warning, cobj_, 0,
+                "Invalid instruction data at address: 0x%08x",
+                static_cast<unsigned int>(address)
+            );
+            sb_addstr(&result_sb, "");
+            return {0, sb_detach(&result_sb)};
+        }
+        // check instruction data size
+        unsigned size = SIM_attr_data_size(instruction_data);
+        if (size < DATA_SIZE) {
+            SIM_LOG_INFO(
+                4, cobj_, 0,
+                "Invalid instruction data size (%u) at address: 0x%08x",
+                size, static_cast<unsigned int>(address)
+            );
+            sb_addstr(&result_sb, "");
+            return {0, sb_detach(&result_sb)};
+        }
+        // read instruction data
+        const uint8 *data = SIM_attr_data(instruction_data);
+        instr_t instr = (static_cast<instr_t>(data[3]) << 24);
+        instr |= (static_cast<instr_t>(data[2]) << 16);
+        instr |= (static_cast<instr_t>(data[1]) << 8);
+        instr |= (static_cast<instr_t>(data[0]));
+        if (instr == operation_code_t::NOP) {
+            SIM_LOG_INFO(
+                4, cobj_, 0,
+                "addr: 0x%08x disassembled: nop",
+                static_cast<unsigned int>(address)
+            );
+            sb_addstr(&result_sb, "nop");
+            return {DATA_SIZE, sb_detach(&result_sb)};
+        }
+        SIM_LOG_INFO(4, cobj_, 0, "instr: '0x%04x'", instr);
+        // decode instruction
+        dec_instr_t dec_instr;
+        riscv_cpu_decoder::decode(instr, &dec_instr);
+        SIM_LOG_INFO(
+            4, cobj_, 0,
+            "dec_instr: opcode='0x%02x', rd='0x%02x', func3='0x%01x', "
+            "rs1='0x%02x', rs2='0x%02x', func7='0x%02x', type='0x%01x'",
+            static_cast<unsigned int>(dec_instr.opcode), static_cast<unsigned int>(dec_instr.rd),
+            static_cast<unsigned int>(dec_instr.func3), static_cast<unsigned int>(dec_instr.rs1),
+            static_cast<unsigned int>(dec_instr.rs2), static_cast<unsigned int>(dec_instr.func7),
+            static_cast<unsigned int>(dec_instr.type)
+        );
+        // disassemble instruction
+        addr_t addr = static_cast<addr_t>(address);
+        std::string disasm_instr = riscv_cpu_disasm::disasm(addr, dec_instr);
+        SIM_LOG_INFO(
+            4, cobj_, 0,
+            "addr: 0x%08x disassembled: %s",
+            static_cast<unsigned int>(addr), disasm_instr.c_str()
+        );
+        sb_addstr(&result_sb, disasm_instr.c_str());
+        return {DATA_SIZE, sb_detach(&result_sb)};
     }
 
     physical_block_t riscv_cpu::logical_to_physical(logical_address_t address, access_t access_type) {

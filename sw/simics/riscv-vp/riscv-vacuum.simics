@@ -8,3 +8,4 @@ phys_mem.load-binary filename = ..\..\..\tests\test_op_imm_0.elf offset = 0x1000
 phys_mem.x address = 0x10000000 size = 100
 
 #@conf.rcpu.iface.signal.signal_raise()
+#@conf.rcpu.iface.processor_info_v2.disassemble(0x00000000, (0x93, 0x05, 0x50, 0x00), 0)
