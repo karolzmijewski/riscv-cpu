@@ -17,7 +17,10 @@
 
 import cli
 
-class_name = 'riscv_cpu'
+class_name = "riscv_cpu"
+
+def pregs(obj, all: bool = False):
+    return cli.command_return(f"{obj.iface.processor_cli.get_pregs(all)}")
 
 # info command prints static information
 def get_info(obj):
@@ -30,3 +33,11 @@ def get_status(obj):
 
 cli.new_info_command(class_name, get_info)
 cli.new_status_command(class_name, get_status)
+cli.new_command(
+    "pregs", pregs,
+    args = [cli.arg(cli.flag_t, "-all")],
+    cls = class_name,
+    alias = "print-registers",
+    short = "Print general purpose registers",
+    doc = "Print general purpose registers"
+)
