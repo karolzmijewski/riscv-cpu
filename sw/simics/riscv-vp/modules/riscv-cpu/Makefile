@@ -27,6 +27,7 @@ SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-types.cpp \
             reg-iface-impl.cpp \
             exec-iface-impl.cpp \
+            step-iface-impl.cpp \
             proc-iface-impl.cpp \
             proc-cli-iface-impl.cpp \
             dmem-iface-impl.cpp

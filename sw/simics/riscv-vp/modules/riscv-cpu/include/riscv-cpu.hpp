@@ -27,6 +27,7 @@
 #include <simics/c++/model-iface/int-register.h>
 #include <simics/c++/model-iface/processor-info.h>
 #include <simics/c++/model-iface/direct-memory.h>
+#include <simics/c++/model-iface/step.h>
 
 #include "riscv-cpu-types.hpp"
 #include "riscv-cpu-conf.hpp"
@@ -35,6 +36,7 @@ namespace kz::riscv::core {
     class riscv_cpu:
         public simics::ConfObject,
         public simics::iface::IntRegisterInterface,
+        public simics::iface::StepInterface,
         public simics::iface::ExecuteInterface,
         public simics::iface::ProcessorInfoV2Interface,
         public simics::iface::ProcessorCliInterface,
@@ -146,7 +148,25 @@ namespace kz::riscv::core {
             direct_memory_handle_t handle,
             access_t conflicting_permission,
             direct_memory_ack_id_t id) override;
-
+        // ! StepInterface (step-iface-impl) !
+        pc_step_t get_step_count() override;
+        void post_step(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            pc_step_t steps,
+            lang_void *user_data) override;
+        void cancel_step(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data, lang_void *match_data),
+            lang_void *match_data) override;
+        pc_step_t find_next_step(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data, lang_void *match_data),
+            lang_void *match_data) override;
+        attr_value_t events() override;
+        pc_step_t advance(pc_step_t steps) override;
         // ! ExecuteInterface (exec-iface-impl) !
         /**
          * Starts execution of the CPU. This function is called to start/restart the CPU executing.
@@ -311,6 +331,8 @@ namespace kz::riscv::core {
             // MemoryUpdate interface is used to control direct access to memory.
             // Every device that uses the direct_memory interface to access memory must implement this interface.
             cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
+            // Step interface is used to support stepping through instructions
+            cls->add(simics::iface::StepInterface::Info());
             // Attributes
             cls->add(
                 simics::Attribute(

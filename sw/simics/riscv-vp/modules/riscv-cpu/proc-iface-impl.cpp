@@ -42,7 +42,7 @@ namespace kz::riscv::core {
         // check instruction data
         if (!SIM_attr_is_data(instruction_data)) {
             SIM_LOG_INFO(
-                Sim_Log_Warning, cobj_, 0,
+                4, cobj_, 0,
                 "Invalid instruction data at address: 0x%08x",
                 static_cast<unsigned int>(address)
             );
@@ -117,14 +117,20 @@ namespace kz::riscv::core {
     }
 
     int riscv_cpu::enable_processor() {
+        // Unsupported operation for this simple CPU model - always enabled
+        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented enable_processor");
         return 1;
     }
 
     int riscv_cpu::disable_processor() {
+        // Unsupported operation for this simple CPU model - always enabled
+        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented disable_processor");
         return 1;
     }
 
     int riscv_cpu::get_enabled() {
+        // Always enabled in this simple CPU model
+        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented get_enabled");
         return 1;
     }
 
