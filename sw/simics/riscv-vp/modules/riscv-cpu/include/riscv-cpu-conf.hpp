@@ -22,9 +22,10 @@
 #include <cstdint>
 
 namespace kz::riscv::core {
-    static const uint8_t ALL_REGS_NUM = 37;
-    static const uint8_t RV32I_GP_REG_NUM = 32;
-    static const uint8_t RAM_ADDR_WIDTH = 16;
-    static const uint32_t RAM_SIZE = (1 << RAM_ADDR_WIDTH); /* 64KB */
-    static const uint8_t DATA_SIZE = 4; /* 4 bytes */
+    static constexpr const char* MODULE_NAME = "riscv-cpu";
+    static constexpr uint8_t ALL_REGS_NUM = 37;
+    static constexpr uint8_t RV32I_GP_REG_NUM = 32;
+    static constexpr uint8_t RAM_ADDR_WIDTH = 16;
+    static constexpr uint32_t RAM_SIZE = (1 << RAM_ADDR_WIDTH); /* 64KB */
+    static constexpr uint8_t DATA_SIZE = 4;
 }

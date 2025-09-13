@@ -41,14 +41,21 @@ p:0x10000060  0000 0000                                ....
 simics>
 ```
 
-If the signal interface is manually triggered, the CPU fetches the first instruction from memory, decodes it,
-and disassembles it. This approach was implemented only for testing. In the future, a proper cycle mechanism
-will be created, and all helper functions will be registered as **CLI** methods associated with the CPU model.
+If the `processor_cli` interface is manually triggered, the CPU fetches instruction pointed by
+address from memory, decodes it, and disassembles it. So far no proper cycle mechanism was
+created.
 
 ```bash
-simics> @conf.rcpu.iface.signal.signal_raise()
-[rcpu info] direct memory: data[0]='0x93', data[1]='0x05', data[2]='0x50', data[3]='0x00'
-[rcpu info] instr: '0x500593'
-[rcpu info] dec_instr: opcode='0x04', rd='0x0b', func3='0x0', rs1='0x00', rs2='0x05', func7='0x00', type='0x2'
-[rcpu info] disassembled: li a1, 5
+simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 0, 1, None)
+(4, 'riscv-cpu: li a1, 5')
+simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 4, 1, None)
+(4, 'riscv-cpu: addi a2, a1, 1')
+simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 8, 1, None)
+(4, 'riscv-cpu: andi a3, a2, 12')
+```
+
+To see state of registers try:
+
+```bash
+simics> rcpu.pregs -all
 ```

@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "riscv-cpu-types.hpp"
 #include "riscv-cpu.hpp"
 #include <simics/util/strbuf.h>
 
@@ -26,9 +27,42 @@ namespace kz::riscv::core {
         generic_address_t address,
         bool print_cpu,
         const char *mnemonic) {
-        // TBD
-        static char result[] = "";
-        return { 0, result };
+        strbuf_t result_sb = sb_new("");
+        // verify parameters
+        if (addr_prefix == nullptr) {
+            addr_prefix = "p";
+        }
+        if (mnemonic != nullptr) {
+            sb_addstr(&result_sb, mnemonic);
+            return {0, sb_detach(&result_sb)};
+        }
+        if (addr_prefix[0] != 'p' && addr_prefix[0] != 'l' && addr_prefix[0] != 'v') {
+            SIM_LOG_INFO(
+                4, cobj_, 0,
+                "Invalid address prefix: '%s' at address: 0x%08x",
+                addr_prefix, static_cast<unsigned int>(address)
+            );
+            return { 0, nullptr };
+        }
+        // read instruction data from memory
+        addr_t addr = static_cast<addr_t>(address);
+        uint8* data = read_mem_(addr, DATA_SIZE);
+        SIM_LOG_INFO(
+            4, cobj_, 0,
+            "direct memory: data[0]='0x%02x', data[1]='0x%02x', data[2]='0x%02x', data[3]='0x%02x'",
+            data[0], data[1], data[2], data[3]
+        );
+        // disassemble instruction
+        attr_value_t instr_data = SIM_make_attr_data(DATA_SIZE, data);
+        tuple_int_string_t result = this->disassemble(address, instr_data, 0);
+        // add cpu name as a prefix
+        if (print_cpu) {
+            std::string cpu_disasm_str = std::string(MODULE_NAME) + ": " + std::string(result.string);
+            sb_addstr(&result_sb, cpu_disasm_str.c_str());
+            return { result.integer, sb_detach(&result_sb) };
+        } else {
+            return result;
+        }
     }
 
     char *riscv_cpu::get_pregs(bool all) {

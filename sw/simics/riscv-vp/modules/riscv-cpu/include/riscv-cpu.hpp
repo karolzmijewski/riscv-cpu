@@ -28,10 +28,8 @@
 #include <simics/c++/model-iface/processor-info.h>
 #include <simics/c++/model-iface/direct-memory.h>
 
+#include "riscv-cpu-types.hpp"
 #include "riscv-cpu-conf.hpp"
-
-// tests
-#include <simics/c++/devs/signal.h>
 
 namespace kz::riscv::core {
     class riscv_cpu:
@@ -40,9 +38,10 @@ namespace kz::riscv::core {
         public simics::iface::ExecuteInterface,
         public simics::iface::ProcessorInfoV2Interface,
         public simics::iface::ProcessorCliInterface,
-        public simics::iface::DirectMemoryUpdateInterface,
-        public simics::iface::SignalInterface {
+        public simics::iface::DirectMemoryUpdateInterface {
     private:
+        // types
+        using addr_t = kz::riscv::types::addr_t;
         // attributes
         conf_object_t *cobj_;
         uint64_t subsystem_;
@@ -53,7 +52,7 @@ namespace kz::riscv::core {
         simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
         // methods
         direct_memory_lookup_t get_mem_handler_(physical_address_t addr, unsigned size);
-        uint8 *read_mem_(uint32_t addr, unsigned size);
+        uint8 *read_mem_(addr_t addr, unsigned size);
     public:
         explicit riscv_cpu(simics::ConfObjectRef conf_obj);
         virtual ~riscv_cpu();
@@ -72,13 +71,6 @@ namespace kz::riscv::core {
          * of initialization process
          */
         void objects_finalized() override;
-
-        // TODO: remove it, signal interface was added only to
-        // trigger some internal actions easily during development
-        // will be replaced where needed by properly registered
-        // CLI commands in a future
-        void signal_raise() override;
-        void signal_lower() override;
 
         // ! ProcessorCliInterface (proc-cli-iface-impl) !
         /**

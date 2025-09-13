@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "riscv-cpu-types.hpp"
 #include "riscv-cpu.hpp"
 
 namespace kz::riscv::core {
@@ -31,7 +32,7 @@ namespace kz::riscv::core {
         return dml;
     }
 
-    uint8 *riscv_cpu::read_mem_(uint32_t offset, unsigned size) {
+    uint8 *riscv_cpu::read_mem_(addr_t offset, unsigned size) {
         simics::Connect<simics::iface::DirectMemoryInterface> dm_iface;
         // set proper memory target for direct memory access interface
         dm_iface.set(mem_handler_.target);
