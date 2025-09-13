@@ -310,8 +310,6 @@ namespace kz::riscv::core {
             // MemoryUpdate interface is used to control direct access to memory.
             // Every device that uses the direct_memory interface to access memory must implement this interface.
             cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
-            // FOR TESTS
-            cls->add(simics::iface::SignalInterface::Info());
             // Attributes
             cls->add(
                 simics::Attribute(

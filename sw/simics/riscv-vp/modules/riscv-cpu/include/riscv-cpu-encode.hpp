@@ -31,5 +31,6 @@ namespace kz::riscv::core {
         static kz::riscv::types::b_imm_t enc_b_imm(dec_imm_t dec_imm);
         static kz::riscv::types::u_imm_t enc_u_imm(dec_imm_t dec_imm);
         static kz::riscv::types::j_imm_t enc_j_imm(dec_imm_t dec_imm);
+        static int32_t sign_extend_(int32_t value, int bits);
     };
 } /* ! kz::riscv::core ! */
