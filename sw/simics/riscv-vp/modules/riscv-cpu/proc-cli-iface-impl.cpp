@@ -19,6 +19,7 @@
 
 #include "riscv-cpu-types.hpp"
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-disasm.hpp"
 #include <simics/util/strbuf.h>
 
 namespace kz::riscv::core {
@@ -66,46 +67,73 @@ namespace kz::riscv::core {
     }
 
     char *riscv_cpu::get_pregs(bool all) {
-        strbuf_t sb = sb_new("");
+        strbuf_t pregs_sb = sb_new("");
         for (int i = 0; i < RV32I_GP_REG_NUM; ++i) {
-            sb_addfmt(&sb, "%s = 0x%08X\n", get_name(i), regs_[i]);
+            sb_addfmt(
+                &pregs_sb, "%s (%s) = 0x%08X\n",
+                riscv_cpu_disasm::get_reg_name(i, false).c_str(),
+                riscv_cpu_disasm::get_reg_name(i, true).c_str(),
+                regs_[i]
+            );
         }
         if (all) {
-            sb_addfmt(&sb, "%s = 0x%08X\n", get_name(32), pc_);
-            sb_addfmt(&sb, "%s = 0x%08X\n", get_name(33), mstatus_);
-            sb_addfmt(&sb, "%s = 0x%08X\n", get_name(34), mepc_);
-            sb_addfmt(&sb, "%s = 0x%08X\n", get_name(35), mtvec_);
+            sb_addfmt(&pregs_sb, "%s = 0x%08X\n", get_name(32), pc_);
+            sb_addfmt(&pregs_sb, "%s = 0x%08X\n", get_name(33), mstatus_);
+            sb_addfmt(&pregs_sb, "%s = 0x%08X\n", get_name(34), mepc_);
+            sb_addfmt(&pregs_sb, "%s = 0x%08X\n", get_name(35), mtvec_);
         }
         // detach the string so Simics owns the memory now
-        return sb_detach(&sb);
+        return sb_detach(&pregs_sb);
     }
 
     attr_value_t riscv_cpu::get_diff_regs() {
-        attr_value_t result = SIM_alloc_attr_list(1);
-        SIM_attr_list_set_item(&result, 0, SIM_make_attr_int64(1));
+        attr_value_t result = SIM_alloc_attr_list(ALL_REGS_NUM);
+        // general purpose registers x0..x31
+        for (int i = 0; i < RV32I_GP_REG_NUM; ++i) {
+            SIM_attr_list_set_item(
+                &result, i,
+                SIM_make_attr_string(riscv_cpu_disasm::get_reg_name(i, true).c_str())
+            );
+        }
+        // other registers
+        for (int i = RV32I_GP_REG_NUM; i < ALL_REGS_NUM; ++i) {
+            SIM_attr_list_set_item(&result, i, SIM_make_attr_string(get_name(i)));
+        }
         return result;
     }
 
     char *riscv_cpu::get_pending_exception_string() {
-        static char result[] = "";
-        return result;
+        // Check for pending exception or interrupt
+        if (mcause_ != 0) {
+            // Format a message describing the exception
+            strbuf_t exc_sb = sb_new("");
+            sb_addfmt(&exc_sb, "Pending exception: mcause=0x%08X", mcause_);
+            return sb_detach(&exc_sb);
+        }
+        // No pending exception
+        return nullptr;
     }
 
     char *riscv_cpu::get_address_prefix() {
-        static char result[] = "p";
-        return result;
+        strbuf_t addr_prefix_sb = sb_new("p");
+        return sb_detach(&addr_prefix_sb);
     }
 
-    physical_block_t riscv_cpu::translate_to_physical(
-        const char *prefix,
-        generic_address_t address) {
-        // TBD
-        // typedef struct {
-        //         int                valid;
-        //         physical_address_t address;
-        //         physical_address_t block_start;
-        //         physical_address_t block_end;
-        // } physical_block_t;
-        return { 0, 0x0, 0x0, 0x1 };
+    physical_block_t riscv_cpu::translate_to_physical(const char *prefix, generic_address_t address) {
+        physical_block_t block = {};
+        // Accept "p" (physical) and "v" (virtual) prefixes and "l" (linear) (no MMU)
+        if (prefix && (prefix[0] == 'p' || prefix[0] == 'v' || prefix[0] == 'l')) {
+            block.valid = 1;
+            block.address = address;
+            block.block_start = address;
+            block.block_end = address + 3; // 4-byte block for RV32I
+        } else {
+            // Invalid or unsupported prefix
+            block.valid = 0;
+            block.address = 0;
+            block.block_start = 0;
+            block.block_end = 0;
+        }
+        return block;
     }
 } /* ! kz::riscv::core ! */

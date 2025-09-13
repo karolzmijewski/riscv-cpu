@@ -83,7 +83,8 @@ namespace kz::riscv::core {
          * @param print_cpu if non-zero, then the name of the processor should be included
          *     first in disassembly line.
          * @param mnemonic is used to print exception or interrupt information as returned by the
-         *    "get_pending_exception_string" function.
+         *    "get_pending_exception_string" function. If it is not NULL, then it is the mnemonic
+         *    to be printed instead of the disassembled instruction.
          * @return a tuple with length of instruction in bytes ad the disassembly string.
          */
         tuple_int_string_t get_disassembly(

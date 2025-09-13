@@ -18,6 +18,7 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-disasm.hpp"
 #include "riscv-cpu-conf.hpp"
 
 namespace kz::riscv::core {
@@ -38,15 +39,15 @@ namespace kz::riscv::core {
     }
 
     const char *riscv_cpu::get_name(int reg) {
-        static char buf[8];
         if (reg == 32) return "pc";
         if (reg == 33) return "mstatus";
         if (reg == 34) return "mepc";
         if (reg == 35) return "mcause";
         if (reg == 36) return "mtvec";
         if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
-            snprintf(buf, sizeof(buf), "x%d", reg);
-            return buf;
+            strbuf_t regs_sb = sb_new("");
+            sb_addstr(&regs_sb, riscv_cpu_disasm::get_reg_name(reg, false).c_str());
+            return sb_detach(&regs_sb);
         }
         return nullptr;
     }
@@ -89,7 +90,6 @@ namespace kz::riscv::core {
 
         for (int i = 0; i < ALL_REGS_NUM; ++i) {
             SIM_attr_list_set_item(&result, i,  SIM_make_attr_uint64(i));
-            SIM_attr_dict_set_item(&result, i, SIM_make_attr_string(get_name(i)), SIM_make_attr_uint64(regs_[i]));
         }
         return result;
     }
