@@ -54,10 +54,18 @@ namespace kz::riscv::core {
 extern "C"
 void init_local() try {
     simics::make_class<kz::riscv::core::riscv_cpu>(
-            "riscv_cpu",
-            "a C++ device template",
-            "This is a documentation string describing the"
-            " riscv_cpu class.");
+        "riscv_cpu",
+        "RV32I CPU model, single core, 32-bit, in-order, non-pipelined, no hyperthreading.",
+        "This is a basic implementation of a RISC-V RV32I CPU model. It supports a subset of "
+        "the RISC-V instruction set architecture (ISA) and is intended for educational and "
+        "simulation purposes. The model is single-core, 32-bit, in-order, non-pipelined, and "
+        "does not support hyperthreading. It provides basic functionalities such as instruction "
+        "fetch, decode, execute, memory access, and write-back stages. The model also includes a "
+        "simple memory management unit (MMU - currently in progress) for address translation and "
+        "supports basic exception handling. Note that this is a simplified model and may not "
+        "include all features of a full-fledged RISC-V CPU implementation. For more advanced "
+        "features and optimizations, please refer to more comprehensive RISC-V CPU models or "
+        "implementations.");
 } catch(const std::exception& e) {
     std::cerr << e.what() << std::endl;
 }
