@@ -17,19 +17,27 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include <cstdint>
+#include "riscv-cpu.hpp"
 
 namespace kz::riscv::core {
-    static constexpr const char* MODULE_NAME = "riscv-cpu";
-    static constexpr uint8_t ALL_REGS_NUM = 37;
-    static constexpr uint8_t RV32I_GP_REG_NUM = 32;
-    static constexpr uint8_t RAM_ADDR_WIDTH = 16;
-    static constexpr uint32_t RAM_SIZE = (1 << RAM_ADDR_WIDTH); /* 64KB */
-    static constexpr uint8_t XLEN = 4;
-    static constexpr uint8_t DATA_SIZE = XLEN;
-    static constexpr uint8_t ADDR_SIZE = XLEN;
-    static constexpr uint8_t INSTR_SIZE = XLEN;
-    static constexpr uint32_t RESET_ADDR = 0x10000000;
-}
+    void riscv_cpu::run() {
+        // Called by Simics to start execution.
+        running_ = true;
+        // Optionally, schedule the first step or event if needed.
+    }
+
+    void riscv_cpu::stop() {
+        // Called by Simics to stop execution.
+        running_ = false;
+    }
+
+    void riscv_cpu::switch_in() {
+        // Called when this CPU becomes the active one in the simulation.
+        // Set up state or resources here if needed.
+    }
+
+    void riscv_cpu::switch_out() {
+        // Called when this CPU is no longer the active one.
+        // Clean up or save state if needed.
+    }
+} /* ! kz::riscv::core ! */

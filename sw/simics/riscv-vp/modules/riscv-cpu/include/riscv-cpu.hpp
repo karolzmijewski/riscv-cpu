@@ -38,12 +38,15 @@ namespace kz::riscv::core {
         public simics::iface::IntRegisterInterface,
         public simics::iface::StepInterface,
         public simics::iface::ExecuteInterface,
+        public simics::iface::ProcessorInfoInterface,
         public simics::iface::ProcessorInfoV2Interface,
         public simics::iface::ProcessorCliInterface,
         public simics::iface::DirectMemoryUpdateInterface {
     private:
         // types
         using addr_t = kz::riscv::types::addr_t;
+        using instr_t = kz::riscv::types::instr_t;
+        using dec_instr_t = kz::riscv::types::dec_instr_t;
         // attributes
         conf_object_t *cobj_;
         uint64_t subsystem_;
@@ -52,9 +55,17 @@ namespace kz::riscv::core {
         uint32_t mstatus_, mepc_, mcause_, mtvec_;
         direct_memory_lookup_t mem_handler_;
         simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
+        uint64_t steps_in_quantum_;
         // methods
         direct_memory_lookup_t get_mem_handler_(physical_address_t addr, unsigned size);
         uint8 *read_mem_(addr_t addr, unsigned size);
+        inline uint32_t read_reg_(int reg);
+        inline void write_reg_(int reg, uint32_t value);
+        instr_t fetch_(addr_t addr);
+        dec_instr_t decode_(instr_t instr);
+        void execute_(dec_instr_t dec_instr);
+        // state
+        bool running_;
     public:
         explicit riscv_cpu(simics::ConfObjectRef conf_obj);
         virtual ~riscv_cpu();
@@ -149,23 +160,53 @@ namespace kz::riscv::core {
             access_t conflicting_permission,
             direct_memory_ack_id_t id) override;
         // ! StepInterface (step-iface-impl) !
+        /** Method returns the number of steps that corresponds to one unit of execution.
+         * For a CPU this is typically one instruction, but it could be more for a VLIW
+         * (Very Long Instruction Word) architecture, or less for a very simple CPU that
+         * can only execute part of an instruction in one step.
+         */
         pc_step_t get_step_count() override;
+        /**
+         * Method is used to post a step event after 'steps' steps. The event will be posted
+         * after the given number of steps have been executed. The event will be posted
+         * to the specified event class and object. The user_data parameter is a pointer
+         * that will be passed to the event callback when the event is posted.
+         */
         void post_step(
             event_class_t *evclass,
             conf_object_t *obj,
             pc_step_t steps,
             lang_void *user_data) override;
+        /**
+         * Method is used to cancel step events that have been posted with post_step.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event will be canceled.
+         */
         void cancel_step(
             event_class_t *evclass,
             conf_object_t *obj,
             int (*pred)(lang_void *data, lang_void *match_data),
             lang_void *match_data) override;
+        /**
+         * Method is used to find the next step event that has been posted with post_step.
+         */
         pc_step_t find_next_step(
             event_class_t *evclass,
             conf_object_t *obj,
             int (*pred)(lang_void *data, lang_void *match_data),
             lang_void *match_data) override;
         attr_value_t events() override;
+        /**
+         * Method is used to advance the CPU by the given number of steps.
+         * The method should return the number of steps that were actually executed.
+         * This may be less than the number of steps requested if the CPU
+         * encounters an exception or interrupt that causes it to stop executing.
+         * The method should also handle any pending events that are due to be
+         * executed during the advance.
+         * Simics will call this method as part of its scheduling loop when the CPU is running.
+         * @param steps The number of steps to advance the CPU.
+         * @return The number of steps that were actually executed.
+         */
         pc_step_t advance(pc_step_t steps) override;
         // ! ExecuteInterface (exec-iface-impl) !
         /**
@@ -323,8 +364,14 @@ namespace kz::riscv::core {
             // IntRegister interface is used to expose CPU registers to debugger and other tools
             cls->add(simics::iface::IntRegisterInterface::Info());
             // Execute interface is used to control execution of the CPU
+            // By default the Simics scheduler will assume that the object being called in with the
+            // execute interface also implements the corresponding processor_info and step interfaces
+            // Instruction execution itself is typically handled in the Step interface implementation
+            // The Execute interface is used to start and stop execution, as well as to switch between
+            // different execution modes (e.g., user mode, supervisor mode).
             cls->add(simics::iface::ExecuteInterface::Info());
             // ProcessorInfo interface is used to provide information about the CPU architecture
+            cls->add(simics::iface::ProcessorInfoInterface::Info());
             cls->add(simics::iface::ProcessorInfoV2Interface::Info());
             // ProcessorCli interface is used to provide CLI API for basic interaction with CPU model
             cls->add(simics::iface::ProcessorCliInterface::Info());

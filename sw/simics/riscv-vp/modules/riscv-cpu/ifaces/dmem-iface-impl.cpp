@@ -17,18 +17,32 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "riscv-cpu-types.hpp"
 #include "riscv-cpu.hpp"
 
 namespace kz::riscv::core {
-    void riscv_cpu::run() {
+    void riscv_cpu::release(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        direct_memory_ack_id_t id) {
+        // TBD
     }
 
-    void riscv_cpu::stop() {
+    void riscv_cpu::update_permission(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        access_t lost_access,
+        access_t lost_permission,
+        access_t lost_inhibit,
+        direct_memory_ack_id_t id) {
+        // TBD
     }
 
-    void riscv_cpu::switch_in() {
-    }
-
-    void riscv_cpu::switch_out() {
+    void riscv_cpu::conflicting_access(
+        conf_object_t *target,
+        direct_memory_handle_t handle,
+        access_t conflicting_permission,
+        direct_memory_ack_id_t id) {
+        // TBD
     }
 } /* ! kz::riscv::core ! */

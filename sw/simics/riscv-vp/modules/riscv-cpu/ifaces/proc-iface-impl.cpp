@@ -51,7 +51,7 @@ namespace kz::riscv::core {
         }
         // check instruction data size
         unsigned size = SIM_attr_data_size(instruction_data);
-        if (size < DATA_SIZE) {
+        if (size < INSTR_SIZE) {
             SIM_LOG_INFO(
                 4, cobj_, 0,
                 "Invalid instruction data size (%u) at address: 0x%08x",
@@ -73,7 +73,7 @@ namespace kz::riscv::core {
                 static_cast<unsigned int>(address)
             );
             sb_addstr(&result_sb, "nop");
-            return {DATA_SIZE, sb_detach(&result_sb)};
+            return {INSTR_SIZE, sb_detach(&result_sb)};
         }
         SIM_LOG_INFO(4, cobj_, 0, "instr: '0x%04x'", instr);
         // decode instruction
@@ -97,7 +97,7 @@ namespace kz::riscv::core {
             static_cast<unsigned int>(addr), disasm_instr.c_str()
         );
         sb_addstr(&result_sb, disasm_instr.c_str());
-        return {DATA_SIZE, sb_detach(&result_sb)};
+        return {INSTR_SIZE, sb_detach(&result_sb)};
     }
 
     physical_block_t riscv_cpu::logical_to_physical(logical_address_t address, access_t access_type) {

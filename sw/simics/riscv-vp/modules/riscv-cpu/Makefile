@@ -25,14 +25,15 @@ SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-encode.cpp \
             riscv-cpu-disasm.cpp \
             riscv-cpu-types.cpp \
-            reg-iface-impl.cpp \
-            exec-iface-impl.cpp \
-            step-iface-impl.cpp \
-            proc-iface-impl.cpp \
-            proc-cli-iface-impl.cpp \
-            dmem-iface-impl.cpp
+            ifaces/reg-iface-impl.cpp \
+            ifaces/exec-iface-impl.cpp \
+            ifaces/step-iface-impl.cpp \
+            ifaces/proc-iface-impl.cpp \
+            ifaces/proc-cli-iface-impl.cpp \
+            ifaces/dmem-iface-impl.cpp
 PYTHON_FILES = module_load.py
 MODULE_CFLAGS += -I$(CURRENT_DIR)/include
+MODULE_CFLAGS += -O0 -g
 SIMICS_API := 7
 THREAD_SAFE := yes
 

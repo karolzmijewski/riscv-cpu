@@ -18,11 +18,17 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-decode.hpp"
+#include "riscv-cpu-conf.hpp"
 
 namespace kz::riscv::core {
 
     pc_step_t riscv_cpu::get_step_count() {
-        return 1; // Each step corresponds to one instruction
+        // Each step corresponds to one instruction
+        // It's typically 1 for a simple CPU, except for complex instructions
+        // that may be broken down into multiple micro-operations (e.g., multi-cycle instructions).
+        // For this simple RISC-V CPU, we return 1.
+        return 0;
     }
 
     void riscv_cpu::post_step(
@@ -31,7 +37,8 @@ namespace kz::riscv::core {
         pc_step_t steps,
         lang_void *user_data) {
         // Post a step event after 'steps' instructions
-        // This is a placeholder implementation
+        // This is a placeholder implementation and does not schedule actual events
+        // TODO: interact with Simics event system here
     }
 
     void riscv_cpu::cancel_step(
@@ -40,7 +47,8 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Cancel step events matching the predicate
-        // This is a placeholder implementation
+        // This is a placeholder implementation and does not interact with actual events
+        // TODO: interact with Simics event system here
     }
 
     pc_step_t riscv_cpu::find_next_step(
@@ -48,8 +56,8 @@ namespace kz::riscv::core {
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
-        // Find the next step event matching the predicate
-        // This is a placeholder implementation
+        // Return the number of steps to the next matching event
+        // For a simple model, return 0 (no events)
         return 0; // No matching step event found
     }
 
@@ -60,8 +68,20 @@ namespace kz::riscv::core {
     }
 
     pc_step_t riscv_cpu::advance(pc_step_t steps) {
+        SIM_LOG_INFO(1, cobj_, 0, "Advancing CPU by %llu steps", steps);
         // Advance the CPU by 'steps' instructions
-        // This is a placeholder implementation
-        return steps;
+        pc_step_t exec_counter = 0;
+        while (exec_counter < steps && running_) {
+            // Fetch instruction at PC
+            // Assuming 4-byte instructions (RV32I, without C extension, for compressed instructions)
+            instr_t instr = fetch_(pc_);
+            // Decode and execute instruction
+            dec_instr_t dec_instr = decode_(instr);
+            // Execute one instruction
+            execute_(dec_instr);
+            ++exec_counter;
+        }
+        steps_in_quantum_ += steps;
+        return exec_counter;
     }
 } /* ! kz::riscv::core ! */

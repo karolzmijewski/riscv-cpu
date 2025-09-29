@@ -17,10 +17,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "riscv-cpu-types.hpp"
-#include "riscv-cpu.hpp"
-#include "riscv-cpu-disasm.hpp"
 #include <simics/util/strbuf.h>
+#include "riscv-cpu.hpp"
+#include "riscv-cpu-types.hpp"
+#include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
     tuple_int_string_t riscv_cpu::get_disassembly(
@@ -47,14 +47,14 @@ namespace kz::riscv::core {
         }
         // read instruction data from memory
         addr_t addr = static_cast<addr_t>(address);
-        uint8* data = read_mem_(addr, DATA_SIZE);
+        uint8* data = read_mem_(addr, INSTR_SIZE);
         SIM_LOG_INFO(
             4, cobj_, 0,
             "direct memory: data[0]='0x%02x', data[1]='0x%02x', data[2]='0x%02x', data[3]='0x%02x'",
             data[0], data[1], data[2], data[3]
         );
         // disassemble instruction
-        attr_value_t instr_data = SIM_make_attr_data(DATA_SIZE, data);
+        attr_value_t instr_data = SIM_make_attr_data(INSTR_SIZE, data);
         tuple_int_string_t result = this->disassemble(address, instr_data, 0);
         // add cpu name as a prefix
         if (print_cpu) {
@@ -136,4 +136,6 @@ namespace kz::riscv::core {
         }
         return block;
     }
+
+    
 } /* ! kz::riscv::core ! */
