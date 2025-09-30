@@ -117,21 +117,27 @@ namespace kz::riscv::core {
     }
 
     int riscv_cpu::enable_processor() {
-        // Unsupported operation for this simple CPU model - always enabled
-        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented enable_processor");
-        return 1;
+        SIM_LOG_INFO(4, cobj_, 0, "Enabling processor (no-op)");
+        if (is_enabled_) {
+            SIM_LOG_INFO(4, cobj_, 0, "Processor already enabled");
+            return 1;
+        }
+        is_enabled_ = true;
+        return 0;
     }
 
     int riscv_cpu::disable_processor() {
-        // Unsupported operation for this simple CPU model - always enabled
-        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented disable_processor");
-        return 1;
+        SIM_LOG_INFO(4, cobj_, 0, "Disabling processor (no-op)");
+        if (!is_enabled_) {
+            SIM_LOG_INFO(4, cobj_, 0, "Processor already disabled");
+            return 1;
+        }
+        is_enabled_ = false;
+        return 0;
     }
 
     int riscv_cpu::get_enabled() {
-        // Always enabled in this simple CPU model
-        SIM_LOG_UNIMPLEMENTED(4, cobj_, 0, "unimplemented get_enabled");
-        return 1;
+        return is_enabled_ ? 1 : 0;
     }
 
     cpu_endian_t riscv_cpu::get_endian() {

@@ -61,27 +61,16 @@ namespace kz::riscv::core {
         return 0; // No matching step event found
     }
 
-    attr_value_t riscv_cpu::events() {
-        // Return the list of pending step events
-        // This is a placeholder implementation
-        return SIM_alloc_attr_list(0);
-    }
+    // attr_value_t riscv_cpu::events() {
+    //     // Return the list of pending step events
+    //     // This is a placeholder implementation
+    //     return SIM_alloc_attr_list(0);
+    // }
 
     pc_step_t riscv_cpu::advance(pc_step_t steps) {
-        SIM_LOG_INFO(1, cobj_, 0, "Advancing CPU by %llu steps", steps);
         // Advance the CPU by 'steps' instructions
-        pc_step_t exec_counter = 0;
-        while (exec_counter < steps && running_) {
-            // Fetch instruction at PC
-            // Assuming 4-byte instructions (RV32I, without C extension, for compressed instructions)
-            instr_t instr = fetch_(pc_);
-            // Decode and execute instruction
-            dec_instr_t dec_instr = decode_(instr);
-            // Execute one instruction
-            execute_(dec_instr);
-            ++exec_counter;
-        }
-        steps_in_quantum_ += steps;
-        return exec_counter;
+        SIM_LOG_INFO(1, cobj_, 0, "Advancing CPU by %llu steps", steps);
+        /* do nothing */
+        return steps;
     }
 } /* ! kz::riscv::core ! */

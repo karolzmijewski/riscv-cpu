@@ -25,12 +25,15 @@ SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-encode.cpp \
             riscv-cpu-disasm.cpp \
             riscv-cpu-types.cpp \
+            riscv-cpu-queue.cpp \
             ifaces/reg-iface-impl.cpp \
             ifaces/exec-iface-impl.cpp \
             ifaces/step-iface-impl.cpp \
             ifaces/proc-iface-impl.cpp \
             ifaces/proc-cli-iface-impl.cpp \
-            ifaces/dmem-iface-impl.cpp
+            ifaces/dmem-iface-impl.cpp \
+            ifaces/cycle-iface-impl.cpp
+
 PYTHON_FILES = module_load.py
 MODULE_CFLAGS += -I$(CURRENT_DIR)/include
 MODULE_CFLAGS += -O0 -g

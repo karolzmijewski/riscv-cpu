@@ -18,14 +18,19 @@
  */
 
 #include <iostream>
+
 #include <simics/cc-api.h>
+#include <simics/processor/processor-platform.h>
 #include <simics/c++/model-iface/direct-memory.h>
+
 #include "riscv-cpu.hpp"
 #include "riscv-cpu-decode.hpp"
 #include "riscv-cpu-conf.hpp"
 
+
 namespace kz::riscv::core {
-    riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj): simics::ConfObject(conf_obj) {
+    riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj)
+    : simics::ConfObject(conf_obj), step_queue_("step-queue"), cycle_queue_("cycle-queue") {
         cobj_ = obj().object();
         regs_.fill(0);
         mstatus_ = 0;
@@ -35,7 +40,9 @@ namespace kz::riscv::core {
         pc_ = 0;
         subsystem_ = 0;
         steps_in_quantum_ = 0;
-        running_ = false;
+        state_ = execute_state_t::Stopped;
+        is_enabled_ = false;
+        current_cycle_ = 0;
     }
 
     riscv_cpu::riscv_cpu::~riscv_cpu() {}
@@ -381,6 +388,17 @@ namespace kz::riscv::core {
                     static_cast<uint32_t>(dec_instr.opcode)
                 );
                 throw std::runtime_error("Unsupported opcode");
+        }
+    }
+
+    void riscv_cpu::handle_events_(event_queue_t *queue) {
+        while (!queue->is_empty()
+            && queue->get_delta() == 0
+            && state_ != execute_state_t::Stopped) {
+                /* Check for pending asynchronous events before
+                handling CPU event */
+                VT_check_async_events();
+                queue->handle_next();
         }
     }
 

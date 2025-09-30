@@ -28,9 +28,13 @@
 #include <simics/c++/model-iface/processor-info.h>
 #include <simics/c++/model-iface/direct-memory.h>
 #include <simics/c++/model-iface/step.h>
+#include <simics/c++/model-iface/cycle.h>
+#include <simics/c++/model-iface/cycle-event.h>
 
 #include "riscv-cpu-types.hpp"
 #include "riscv-cpu-conf.hpp"
+#include "riscv-cpu-state.hpp"
+#include "riscv-cpu-queue.hpp"
 
 namespace kz::riscv::core {
     class riscv_cpu:
@@ -38,6 +42,7 @@ namespace kz::riscv::core {
         public simics::iface::IntRegisterInterface,
         public simics::iface::StepInterface,
         public simics::iface::ExecuteInterface,
+        public simics::iface::CycleInterface,
         public simics::iface::ProcessorInfoInterface,
         public simics::iface::ProcessorInfoV2Interface,
         public simics::iface::ProcessorCliInterface,
@@ -55,17 +60,26 @@ namespace kz::riscv::core {
         uint32_t mstatus_, mepc_, mcause_, mtvec_;
         direct_memory_lookup_t mem_handler_;
         simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
+        // state
+        execute_state_t state_;
+        bool is_enabled_;
         uint64_t steps_in_quantum_;
+        cycles_t current_cycle_;
+        event_queue_t step_queue_;
+        event_queue_t cycle_queue_;
         // methods
+        // methods - memory access
         direct_memory_lookup_t get_mem_handler_(physical_address_t addr, unsigned size);
         uint8 *read_mem_(addr_t addr, unsigned size);
+        // methods - register access
         inline uint32_t read_reg_(int reg);
         inline void write_reg_(int reg, uint32_t value);
+        // methods - instruction processing
         instr_t fetch_(addr_t addr);
         dec_instr_t decode_(instr_t instr);
         void execute_(dec_instr_t dec_instr);
-        // state
-        bool running_;
+        // methods - cycle / step processing
+        void handle_events_(event_queue_t *queue);
     public:
         explicit riscv_cpu(simics::ConfObjectRef conf_obj);
         virtual ~riscv_cpu();
@@ -138,15 +152,34 @@ namespace kz::riscv::core {
          * then the only allowed address prefixes are "v" (virtual) and "p" (physical), and then
          * "logical_to_physical" from "processor_info" interface will be used to translate
          * virtual addresses.
+         * @param prefix the address type prefix, as returned by "get_address_prefix"
+         * @param address the address to translate
          */
         physical_block_t translate_to_physical(
             const char *prefix,
             generic_address_t address) override;
         // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
+        /**
+         * Method is called to release a direct memory mapping previously obtained
+         * through "get_direct_memory" method in the "direct_memory_lookup" interface.
+         * @param target the object that obtained the mapping
+         * @param handle the handle that was returned by "get_direct_memory"
+         * @param id the ack id that was returned by "get_direct_memory"
+         */
         void release(
             conf_object_t *target,
             direct_memory_handle_t handle,
             direct_memory_ack_id_t id) override;
+        /**
+         * Method is called to inform the CPU that some access or permission has been lost
+         * on a direct memory mapping previously obtained through "get_direct_memory"
+         * @param target the object that obtained the mapping
+         * @param handle the handle that was returned by "get_direct_memory"
+         * @param lost_access the access that has been lost, see access_t enum
+         * @param lost_permission the permission that has been lost, see access_t enum
+         * @param lost_inhibit the inhibit that has been lost, see access_t enum
+         * @param id the ack id that was returned by "get_direct_memory"
+         */
         void update_permission(
             conf_object_t *target,
             direct_memory_handle_t handle,
@@ -154,6 +187,14 @@ namespace kz::riscv::core {
             access_t lost_permission,
             access_t lost_inhibit,
             direct_memory_ack_id_t id) override;
+        /**
+         * Method is called to inform the CPU that a conflicting access has been attempted
+         * on a direct memory mapping previously obtained through "get_direct_memory"
+         * @param target the object that obtained the mapping
+         * @param handle the handle that was returned by "get_direct_memory"
+         * @param conflicting_permission the permission that was violated, see access_t enum
+         * @param id the ack id that was returned by "get_direct_memory"
+         */
         void conflicting_access(
             conf_object_t *target,
             direct_memory_handle_t handle,
@@ -195,7 +236,11 @@ namespace kz::riscv::core {
             conf_object_t *obj,
             int (*pred)(lang_void *data, lang_void *match_data),
             lang_void *match_data) override;
-        attr_value_t events() override;
+        /**
+         * Method returns a list of all event classes that have events posted on them.
+         * TODO: DUPLICATE WITH CYCLE INTERFACE???
+         */
+        //attr_value_t events() override;
         /**
          * Method is used to advance the CPU by the given number of steps.
          * The method should return the number of steps that were actually executed.
@@ -236,6 +281,51 @@ namespace kz::riscv::core {
          * It means that some other execute object in the cell is taking control of the simulation.
          */
         void switch_out() override;
+
+        // ! CycleInterface (cycle-iface-impl) !
+        cycles_t get_cycle_count() override;
+        double get_time() override;
+        cycles_t cycles_delta(double when) override;
+        uint64 get_frequency() override;
+        void post_cycle(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            cycles_t cycles,
+            lang_void *user_data) override;
+        void post_time(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            double seconds,
+            lang_void *user_data) override;
+        void cancel(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data,
+                lang_void *match_data),
+                lang_void *match_data) override;
+        cycles_t find_next_cycle(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data, lang_void *match_data),
+            lang_void *match_data) override;
+        double find_next_time(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data, lang_void *match_data),
+            lang_void *match_data) override;
+        attr_value_t events() override;
+        local_time_t get_time_in_ps() override;
+        cycles_t cycles_delta_from_ps(local_time_t when) override;
+        void post_time_in_ps(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            duration_t picoseconds,
+            lang_void *user_data) override;
+        duration_t find_next_time_in_ps(
+            event_class_t *evclass,
+            conf_object_t *obj,
+            int (*pred)(lang_void *data, lang_void *match_data),
+            lang_void *match_data) override;
 
         // ! IntRegisterInterface (reg-iface-impl) !
         // The int_register interface is used for access to registers in a processor.
@@ -380,6 +470,8 @@ namespace kz::riscv::core {
             cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
             // Step interface is used to support stepping through instructions
             cls->add(simics::iface::StepInterface::Info());
+            // Cycle interface is used to support cycle-accurate simulation
+            cls->add(simics::iface::CycleInterface::Info());
             // Attributes
             cls->add(
                 simics::Attribute(

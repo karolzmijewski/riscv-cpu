@@ -18,17 +18,60 @@
  */
 
 #include "riscv-cpu.hpp"
+#include <simics/processor-api.h>
 
 namespace kz::riscv::core {
+
     void riscv_cpu::run() {
         // Called by Simics to start execution.
-        running_ = true;
-        // Optionally, schedule the first step or event if needed.
+        SIM_LOG_INFO(4, cobj_, 0, "Starting execution\n");
+        state_ = execute_state_t::Running;
+
+        // Check event queue for pending events, timers, etc. on current step and cycle
+        handle_events_(&cycle_queue_);
+        if (is_enabled_) {
+            handle_events_(&step_queue_);
+        }
+
+        while (state_ == execute_state_t::Running) {
+            if (is_enabled_) {
+                // Execute one quantum of instructions
+                // For simplicity, let's say we execute a fixed number of instructions per quantum
+                const pc_step_t quantum_size = 1; // Number of instructions per quantum
+                pc_step_t exec_counter = 0;
+                while (exec_counter < quantum_size && state_ == execute_state_t::Running) {
+                    // Fetch instruction at PC
+                    // Assuming 4-byte instructions (RV32I, without C extension, for compressed instructions)
+                    instr_t instr = fetch_(pc_);
+                    // Decode and execute instruction
+                    dec_instr_t dec_instr = decode_(instr);
+                    // Execute one instruction
+                    execute_(dec_instr);
+                    ++exec_counter;
+                }
+                steps_in_quantum_ += exec_counter;
+            } else {
+                // If the processor is disabled, we can either halt or just wait
+                // TODO: Implement wait or halt behavior, count delta cycles
+            }
+            if (state_ == execute_state_t::Stopped) {
+                SIM_LOG_INFO(4, cobj_, 0, "Execution stopped\n");
+                break;
+            }
+            // After each quantum, check for interrupts, events, etc.
+            // This is a placeholder for actual event handling logic
+            handle_events_(&cycle_queue_);
+            if (is_enabled_) {
+                handle_events_(&step_queue_);
+            }
+        }
     }
 
     void riscv_cpu::stop() {
         // Called by Simics to stop execution.
-        running_ = false;
+        SIM_LOG_INFO(4, cobj_, 0, "Execution stopping\n");
+        state_ = execute_state_t::Stopped;
+        VT_stop_event_processing(cobj_);
     }
 
     void riscv_cpu::switch_in() {
