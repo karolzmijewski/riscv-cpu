@@ -72,6 +72,7 @@ namespace kz::riscv::core {
         attr_value_t to_attr_list(simtime_t start) const;
         set_error_t set(attr_value_t *val);
         void clear();
+        const std::deque<event>& get_events() const { return events_; }
     private:
         std::string name_;
         std::deque<event> events_;

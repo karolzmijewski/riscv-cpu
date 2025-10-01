@@ -18,23 +18,36 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-cycle.hpp"
+#include "riscv-cpu-queue.hpp"
 #include <simics/base/time.h>
+#include <simics/base/local-time.h>
 
 namespace kz::riscv::core {
+
+    static int match_all(lang_void *data, lang_void *match_data) {
+            return 1;
+    }
+
+    void cycle_event_posted_() {
+        /* An event has been posted. We only single step, so we don't need to
+           bother. */
+    }
+
     cycles_t riscv_cpu::get_cycle_count() {
         return current_cycle_;
     }
 
     double riscv_cpu::get_time() {
-        return 0.0;
+        return local_time_as_sec(get_time_in_ps());
     }
 
     cycles_t riscv_cpu::cycles_delta(double when) {
-        return 0;
+        return cycles_delta_from_ps(local_time_from_sec(cobj_, when));
     }
 
     uint64_t riscv_cpu::get_frequency() {
-        return 0;
+        return freq_hz_;
     }
 
     void riscv_cpu::post_cycle(
@@ -43,6 +56,13 @@ namespace kz::riscv::core {
         cycles_t cycles,
         lang_void *user_data) {
         // Post a cycle event after 'cycles' cycles
+        const char *err = riscv_cpu_cycle::check_post_cycle_params(cycles, evclass);
+        if (err) {
+            SIM_LOG_ERROR(cobj_, 0, "%s", err);
+            return;
+        }
+        cycle_queue_.post(cycles, evclass, obj, user_data);
+        cycle_event_posted_();
     }
 
     void riscv_cpu::post_time(
@@ -51,6 +71,16 @@ namespace kz::riscv::core {
         double seconds,
         lang_void *user_data) {
         // Post a time event after 'seconds' seconds
+        const char *err = riscv_cpu_cycle::generic_post_time(
+            cobj_, evclass, obj, seconds, user_data,
+            [this](event_class_t* evclass, conf_object_t* obj, cycles_t cycles, void* user_data) {
+                this->post_cycle(evclass, obj, cycles, user_data);
+            }, freq_hz_
+        );
+        if (err) {
+                SIM_LOG_ERROR(cobj_, 0, "%s", err);
+        }
+        cycle_event_posted_();
     }
 
     void riscv_cpu::cancel(
@@ -58,6 +88,7 @@ namespace kz::riscv::core {
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data), lang_void *match_data) {
         // Cancel events matching the predicate
+        cycle_queue_.remove(evclass, obj, pred == NULL ? match_all : pred, match_data);
     }
 
     cycles_t riscv_cpu::find_next_cycle(
@@ -66,7 +97,7 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Return the number of cycles to the next matching event
-        return 0;
+        return cycle_queue_.next(evclass, obj, pred == NULL ? match_all : pred, match_data);
     }
 
     double riscv_cpu::find_next_time(
@@ -75,31 +106,76 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Return the time to the next matching event
-        return 0.0;
+        return riscv_cpu_cycle::generic_find_next_time(
+            cobj_, evclass, obj, pred, match_data,
+            [this](event_class_t *evclass, conf_object_t *obj, int (*pred)(lang_void*, lang_void*), lang_void *match_data) -> cycles_t {
+                return this->find_next_cycle(evclass, obj, pred, match_data);
+            }, freq_hz_);
     }
 
     attr_value_t riscv_cpu::events() {
         // Return the list of pending cycle events
-        return SIM_alloc_attr_list(0);
+        attr_value_t evs = SIM_alloc_attr_list(static_cast<int>(cycle_queue_.get_events().size()));
+        cycles_t t = 0;
+        for (size_t i = 0; i < cycle_queue_.get_events().size(); ++i) {
+            const auto& e = cycle_queue_.get_events()[i];
+            // Get event description if available
+            std::string desc;
+            if (e.evclass && e.evclass->describe) {
+                char* d = e.evclass->describe(e.obj, e.param);
+                if (d) {
+                    desc = d;
+                    MM_FREE(d);
+                }
+            }
+            t += e.delta;
+            SIM_attr_list_set_item(&evs, static_cast<int>(i),
+                SIM_make_attr_list(
+                    4,
+                    SIM_make_attr_object(e.obj),
+                    SIM_make_attr_string(e.evclass ? e.evclass->name : ""),
+                    SIM_make_attr_uint64(t),
+                    SIM_make_attr_string(desc.c_str())
+                )
+            );
+        }
+        return evs;
     }
 
     local_time_t riscv_cpu::get_time_in_ps() {
-        local_time_t lt;
-        lt.clock = cobj_;
-        lt.t = {}; // zero-initialize lt.t according to its type
-        return lt;
+        return riscv_cpu_cycle::generic_get_time_in_ps(cobj_, time_offset_, current_cycle_, freq_hz_);
     }
 
     cycles_t riscv_cpu::cycles_delta_from_ps(local_time_t when) {
-        return 0;
+        cycles_t delta;
+        if (!riscv_cpu_cycle::generic_delta_from_ps(when, time_offset_, current_cycle_, freq_hz_, &delta)) {
+                char r[LOCAL_TIME_STR_MAX_SIZE];
+                local_time_as_string(when, r);
+                SIM_LOG_ERROR(
+                    cobj_, 0,
+                    "cycles_delta_from_ps: time delta to %s is too big to be represented in cycles", r
+                );
+                return -1;
+        } else {
+            return delta;
+        }
     }
 
     void riscv_cpu::post_time_in_ps(
         event_class_t *evclass,
         conf_object_t *obj,
-        duration_t picoseconds,
+        duration_t ps,
         lang_void *user_data) {
         // Post a time event after 'picoseconds' picoseconds
+        const char *err = riscv_cpu_cycle::generic_post_time_in_ps(
+            cobj_, evclass, obj, ps, user_data,
+            [this](event_class_t* evclass, conf_object_t* obj, cycles_t cycles, void* user_data) {
+                this->post_cycle(evclass, obj, cycles, user_data);
+            }, freq_hz_);
+        if (err) {
+            SIM_LOG_ERROR(cobj_, 0, "%s", err);
+        }
+        cycle_event_posted_();
     }
 
     duration_t riscv_cpu::find_next_time_in_ps(
@@ -107,6 +183,10 @@ namespace kz::riscv::core {
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
-        return {};
+        return riscv_cpu_cycle::generic_find_next_time_in_ps(
+            cobj_, evclass, obj, pred, match_data,
+            [this](event_class_t *evclass, conf_object_t *obj, int (*pred)(lang_void*, lang_void*), lang_void *match_data) -> cycles_t {
+                return this->find_next_cycle(evclass, obj, pred, match_data);
+            }, freq_hz_);
     }
 }; /* ! kz::riscv::core ! */

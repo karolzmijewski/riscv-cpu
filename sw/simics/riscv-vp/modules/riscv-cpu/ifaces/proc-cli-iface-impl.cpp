@@ -136,6 +136,4 @@ namespace kz::riscv::core {
         }
         return block;
     }
-
-    
 } /* ! kz::riscv::core ! */

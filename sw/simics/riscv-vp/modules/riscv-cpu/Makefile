@@ -26,6 +26,7 @@ SRC_FILES = riscv-cpu.cpp \
             riscv-cpu-disasm.cpp \
             riscv-cpu-types.cpp \
             riscv-cpu-queue.cpp \
+            riscv-cpu-cycle.cpp \
             ifaces/reg-iface-impl.cpp \
             ifaces/exec-iface-impl.cpp \
             ifaces/step-iface-impl.cpp \

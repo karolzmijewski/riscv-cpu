@@ -67,6 +67,20 @@ namespace kz::riscv::core {
         return (it != events_.end()) ? it->delta : 0;
     }
 
+    void event_queue::remove(
+        event_class_t *evclass,
+        const conf_object_t *obj,
+        int (*pred)(lang_void *data, lang_void *match_data),
+        void *match_data) {
+        auto it = std::remove_if(events_.begin(), events_.end(),
+            [&](const event& e) {
+                return (!evclass || e.evclass == evclass) &&
+                       (!obj || e.obj == obj) &&
+                       (!pred || pred(e.param, match_data));
+            });
+        events_.erase(it, events_.end());
+    }
+
     void event_queue::post(simtime_t when, event_class_t* evclass, conf_object_t* obj, lang_void* param) {
         // slot can be used for ordering if needed, here set to 0
         events_.emplace_back(when, 0, evclass, obj, param);

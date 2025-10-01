@@ -41,8 +41,10 @@ namespace kz::riscv::core {
         subsystem_ = 0;
         steps_in_quantum_ = 0;
         state_ = execute_state_t::Stopped;
-        is_enabled_ = false;
+        is_enabled_ = true;
         current_cycle_ = 0;
+        freq_hz_ = 100000000;  // Default frequency: 100 MHz
+        time_offset_.val = {};
     }
 
     riscv_cpu::riscv_cpu::~riscv_cpu() {}

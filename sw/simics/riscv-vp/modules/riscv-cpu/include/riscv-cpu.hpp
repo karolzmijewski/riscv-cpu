@@ -64,21 +64,23 @@ namespace kz::riscv::core {
         execute_state_t state_;
         bool is_enabled_;
         uint64_t steps_in_quantum_;
+        uint64_t freq_hz_;
         cycles_t current_cycle_;
+        bigtime_t time_offset_;
         event_queue_t step_queue_;
         event_queue_t cycle_queue_;
         // methods
-        // methods - memory access
+        // -- methods: memory access
         direct_memory_lookup_t get_mem_handler_(physical_address_t addr, unsigned size);
         uint8 *read_mem_(addr_t addr, unsigned size);
-        // methods - register access
+        // -- methods: register access
         inline uint32_t read_reg_(int reg);
         inline void write_reg_(int reg, uint32_t value);
-        // methods - instruction processing
+        // -- methods: instruction processing
         instr_t fetch_(addr_t addr);
         dec_instr_t decode_(instr_t instr);
         void execute_(dec_instr_t dec_instr);
-        // methods - cycle / step processing
+        // -- methods: cycle / step processing
         void handle_events_(event_queue_t *queue);
     public:
         explicit riscv_cpu(simics::ConfObjectRef conf_obj);
@@ -283,44 +285,118 @@ namespace kz::riscv::core {
         void switch_out() override;
 
         // ! CycleInterface (cycle-iface-impl) !
+        /**
+         * Method returns the current cycle count of the CPU. The cycle count is a monotonically
+         * increasing value that represents the number of cycles that have been executed by the CPU.
+         * The cycle count is typically incremented by one for each cycle, but it can be incremented
+         * by more than one for CPUs that can execute multiple cycles in parallel.
+         */
         cycles_t get_cycle_count() override;
+        /**
+         * Method returns the current time in seconds. The time is typically derived from the
+         * cycle count and the CPU frequency.
+         */
         double get_time() override;
+        /**
+         * Method returns the number of cycles that have elapsed since the given time in seconds.
+         */
         cycles_t cycles_delta(double when) override;
-        uint64 get_frequency() override;
+        /**
+         * Method returns the frequency of the CPU in Hz.
+         */
+        uint64_t get_frequency() override;
+        /**
+         * Method is used to post a cycle event after 'cycles' cycles. The event will be posted
+         * after the given number of cycles have been executed. The event will be posted
+         * to the specified event class and object. The user_data parameter is a pointer
+         * that will be passed to the event callback when the event is posted.
+         */
         void post_cycle(
             event_class_t *evclass,
             conf_object_t *obj,
             cycles_t cycles,
             lang_void *user_data) override;
+        /**
+         * Method is used to post a time event after 'seconds' seconds. The event will be posted
+         * after the given time has elapsed. The event will be posted
+         * to the specified event class and object. The user_data parameter is a pointer
+         * that will be passed to the event callback when the event is posted.
+         */
         void post_time(
             event_class_t *evclass,
             conf_object_t *obj,
             double seconds,
             lang_void *user_data) override;
+        /**
+         * Method is used to cancel cycle events that have been posted with post_cycle.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event will be canceled.
+         */
         void cancel(
             event_class_t *evclass,
             conf_object_t *obj,
             int (*pred)(lang_void *data,
                 lang_void *match_data),
                 lang_void *match_data) override;
+        /**
+         * Method is used to find the next cycle event that has been posted with post_cycle.
+         * The method returns the number of cycles until the next event that matches
+         * the given criteria. If no matching event is found, the method returns
+         * a special value indicating that there are no more events.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event is considered a match.
+         */
         cycles_t find_next_cycle(
             event_class_t *evclass,
             conf_object_t *obj,
             int (*pred)(lang_void *data, lang_void *match_data),
             lang_void *match_data) override;
+        /**
+         * Method is used to find the next time event that has been posted with post_time.
+         * The method returns the time in seconds until the next event that matches
+         * the given criteria. If no matching event is found, the method returns
+         * a special value indicating that there are no more events.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event is considered a match.
+         */
         double find_next_time(
             event_class_t *evclass,
             conf_object_t *obj,
             int (*pred)(lang_void *data, lang_void *match_data),
             lang_void *match_data) override;
+        /**
+         * Method returns a list of all event classes that have events posted on them.
+         */
         attr_value_t events() override;
+        /**
+         * Method returns the current time in picoseconds. The time is typically derived from the
+         * cycle count and the CPU frequency.
+         */
         local_time_t get_time_in_ps() override;
+        /**
+         * Method returns the number of picoseconds that have elapsed since the given time.
+         */
         cycles_t cycles_delta_from_ps(local_time_t when) override;
+        /**
+         * Method returns the frequency of the CPU in Hz.
+         */
+        //uint64_t get_frequency() override;
+        /**
+         * Method is used to post a time event after 'picoseconds' picoseconds. The event will be posted
+         * after the given time has elapsed. The event will be posted
+         * to the specified event class and object. The user_data parameter is a pointer
+         * that will be passed to the event callback when the event is posted.
+         */
         void post_time_in_ps(
             event_class_t *evclass,
             conf_object_t *obj,
             duration_t picoseconds,
             lang_void *user_data) override;
+        /**
+         * Method is used to cancel time events that have been posted with post_time_in_ps.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event will be canceled.
+         */
         duration_t find_next_time_in_ps(
             event_class_t *evclass,
             conf_object_t *obj,
@@ -477,6 +553,12 @@ namespace kz::riscv::core {
                 simics::Attribute(
                     "phys_mem", "o", "Physical memory space.",
                     ATTR_CLS_VAR(riscv_cpu, phys_mem_)
+                )
+            );
+            cls->add(
+                simics::Attribute(
+                    "freq", "i", "CPU frequency in Hz.",
+                    ATTR_CLS_VAR(riscv_cpu, freq_hz_)
                 )
             );
         }
