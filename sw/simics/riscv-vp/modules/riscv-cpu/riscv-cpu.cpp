@@ -42,7 +42,10 @@ namespace kz::riscv::core {
         steps_in_quantum_ = 0;
         state_ = execute_state_t::Stopped;
         is_enabled_ = true;
+        stall_cycles_ = 0;
+        total_stall_cycles_ = 0;
         current_cycle_ = 0;
+        current_step_ = 0;
         freq_hz_ = 100000000;  // Default frequency: 100 MHz
         time_offset_.val = {};
     }
@@ -112,6 +115,8 @@ namespace kz::riscv::core {
 
     void riscv_cpu::execute_(dec_instr_t dec_instr) {
         using operation_code_t = kz::riscv::types::operation_code_t;
+        //cycles_t stall_cycles = 0; // for IDLE operation
+        // cycles_t cycles_left = 0; // for IDLE operation
         uint32_t rs1_val = read_reg_(dec_instr.rs1);
         uint32_t rs2_val = read_reg_(dec_instr.rs2);
         int imm12 = ((int)dec_instr.imm) << 12; // for U_TYPE
@@ -121,12 +126,14 @@ namespace kz::riscv::core {
                 // Implement load logic here
                 SIM_LOG_INFO(2, cobj_, 0, "Executing LOAD instruction");
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::STORE:
                 // Store instructions (e.g., SB, SH, SW)
                 // Implement store logic here
                 SIM_LOG_INFO(2, cobj_, 0, "Executing STORE instruction");
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::OP_IMM:
                 SIM_LOG_INFO(2, cobj_, 0, "Executing OP_IMM instruction");
@@ -187,6 +194,7 @@ namespace kz::riscv::core {
                         throw std::runtime_error("Unsupported OP_IMM func3");
                 }
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::OP:
                 SIM_LOG_INFO(2, cobj_, 0, "Executing OP instruction");
@@ -303,30 +311,35 @@ namespace kz::riscv::core {
                         throw std::runtime_error("Unsupported OP func3");
                     }
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::LUI:
                 // Load Upper Immediate
                 SIM_LOG_INFO(2, cobj_, 0, "Executing LUI instruction");
                 write_reg_(dec_instr.rd, imm12);
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::AUIPC:
                 // Add Upper Immediate to PC
                 SIM_LOG_INFO(2, cobj_, 0, "Executing AUIPC instruction");
                 write_reg_(dec_instr.rd, pc_ + imm12);
                 pc_ += INSTR_SIZE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::JAL:
                 // Jump and Link
                 SIM_LOG_INFO(2, cobj_, 0, "Executing JAL instruction");
                 write_reg_(dec_instr.rd, pc_ + INSTR_SIZE);
                 pc_ += (int32_t)dec_instr.imm;
+                inc_cycles_(1);
                 break;
             case operation_code_t::JALR:
                 // Jump and Link Register
                 SIM_LOG_INFO(2, cobj_, 0, "Executing JALR instruction");
                 write_reg_(dec_instr.rd, pc_ + INSTR_SIZE);
                 pc_ = (rs1_val + (int32_t)dec_instr.imm) & 0xFFFFFFFE;
+                inc_cycles_(1);
                 break;
             case operation_code_t::BRANCH:
                 // Branch instructions (e.g., BEQ, BNE, BLT, BGE, BLTU, BGEU)
@@ -338,6 +351,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     case 0b001: // BNE
                         if (rs1_val != rs2_val) {
@@ -345,6 +359,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     case 0b100: // BLT
                         if (static_cast<int32_t>(rs1_val) < static_cast<int32_t>(rs2_val)) {
@@ -352,6 +367,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     case 0b101: // BGE
                         if (static_cast<int32_t>(rs1_val) >= static_cast<int32_t>(rs2_val)) {
@@ -359,6 +375,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     case 0b110: // BLTU
                         if (static_cast<uint32_t>(rs1_val) < static_cast<uint32_t>(rs2_val)) {
@@ -366,6 +383,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     case 0b111: // BGEU
                         if (static_cast<uint32_t>(rs1_val) >= static_cast<uint32_t>(rs2_val)) {
@@ -373,6 +391,7 @@ namespace kz::riscv::core {
                         } else {
                             pc_ += INSTR_SIZE;
                         }
+                        inc_cycles_(1);
                         break;
                     default:
                         SIM_LOG_ERROR(
@@ -401,6 +420,26 @@ namespace kz::riscv::core {
                 handling CPU event */
                 VT_check_async_events();
                 queue->handle_next();
+        }
+    }
+
+    void riscv_cpu::inc_cycles_(int cycles) {
+        if (cycles < 0) {
+            throw std::invalid_argument("Cycles to increment must be non-negative");
+        }
+        if (cycles > 0) {
+            cycle_queue_.decrement(cycles);
+            current_cycle_ += cycles;
+        }
+    }
+
+    void riscv_cpu::inc_steps_(int steps) {
+        if (steps < 0) {
+            throw std::invalid_argument("Steps to increment must be non-negative");
+        }
+        if (steps > 0) {
+            step_queue_.decrement(steps);
+            current_step_ += steps;
         }
     }
 

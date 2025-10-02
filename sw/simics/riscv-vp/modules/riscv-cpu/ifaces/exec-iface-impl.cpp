@@ -18,6 +18,7 @@
  */
 
 #include "riscv-cpu.hpp"
+#include "riscv-cpu-queue.hpp"
 #include <simics/processor-api.h>
 
 namespace kz::riscv::core {
@@ -52,7 +53,18 @@ namespace kz::riscv::core {
                 steps_in_quantum_ += exec_counter;
             } else {
                 // If the processor is disabled, we can either halt or just wait
-                // TODO: Implement wait or halt behavior, count delta cycles
+                simtime_t delta = cycle_queue_.get_delta();
+                if (stall_cycles_ != 0) {
+                    if (delta > stall_cycles_) {
+                        delta = stall_cycles_;
+                    }
+                    stall_cycles_ -= delta;
+                    total_stall_cycles_ += delta;
+                }
+                if (delta > 0) {
+                    inc_cycles_(delta);
+                }
+
             }
             if (state_ == execute_state_t::Stopped) {
                 SIM_LOG_INFO(4, cobj_, 0, "Execution stopped\n");

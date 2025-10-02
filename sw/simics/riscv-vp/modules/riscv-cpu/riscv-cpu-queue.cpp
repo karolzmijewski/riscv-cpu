@@ -47,6 +47,24 @@ namespace kz::riscv::core {
 
     event::~event() {}
 
+    attr_value_t event::to_attr_val(simtime_t time) const {
+        if (evclass->flags & Sim_EC_Notsaved) {
+            return SIM_make_attr_invalid(); /* don't save this attribute */
+        }
+        if (!evclass->get_value) {
+            return SIM_make_attr_invalid(); /* can't get value */
+        }
+        attr_value_t val = evclass->get_value(obj, param);
+        return SIM_make_attr_list(
+            5,
+            SIM_make_attr_object(obj),
+            SIM_make_attr_string(evclass->name),
+            val,
+            SIM_make_attr_uint64(slot),
+            SIM_make_attr_uint64(time)
+        );
+    }
+
     // ! Event Queue !
     event_queue::event_queue(const char *name) : name_(name) {}
     event_queue::~event_queue() = default;
@@ -132,14 +150,28 @@ namespace kz::riscv::core {
 
     attr_value_t event_queue::to_attr_list(simtime_t start) const {
         // This is a placeholder implementation
-        // In a real implementation, you would convert the events to an attr_value_t list
-        return SIM_alloc_attr_list(0);
+        attr_value_t ret = SIM_alloc_attr_list(events_.size());
+        simtime_t t = start;
+        int index = 0;
+        for (const auto& e : events_) {
+            t += e.delta;
+            attr_value_t attr = e.to_attr_val(t);
+            if (!SIM_attr_is_invalid(attr)) {
+                SIM_attr_list_set_item(&ret, index++, attr);
+            }
+        }
+        SIM_attr_list_resize(&ret, index);
+        return ret;
     }
 
     set_error_t event_queue::set(attr_value_t *val) {
-        // This is a placeholder implementation
-        // In a real implementation, you would parse the attr_value_t
-        // and set the queue's events accordingly
+        clear();
+        for (unsigned i = 0; i < SIM_attr_list_size(*val); i++) {
+            attr_value_t elem = SIM_attr_list_item(*val, i);
+            if (!add(&elem)) {
+                return Sim_Set_Illegal_Value;
+            }
+        }
         return Sim_Set_Ok;
     }
 

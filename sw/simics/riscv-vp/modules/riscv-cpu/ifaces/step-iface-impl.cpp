@@ -23,12 +23,17 @@
 
 namespace kz::riscv::core {
 
+    static int match_all_(lang_void *data, lang_void *match_data) {
+            return 1;
+    }
+
+    static void step_event_posted_() {
+        /* An event has been posted. We only single step, so we don't need to
+           bother. */
+    }
+
     pc_step_t riscv_cpu::get_step_count() {
-        // Each step corresponds to one instruction
-        // It's typically 1 for a simple CPU, except for complex instructions
-        // that may be broken down into multiple micro-operations (e.g., multi-cycle instructions).
-        // For this simple RISC-V CPU, we return 1.
-        return 0;
+        return current_step_;
     }
 
     void riscv_cpu::post_step(
@@ -37,8 +42,12 @@ namespace kz::riscv::core {
         pc_step_t steps,
         lang_void *user_data) {
         // Post a step event after 'steps' instructions
-        // This is a placeholder implementation and does not schedule actual events
-        // TODO: interact with Simics event system here
+        if (steps < 0) {
+            SIM_LOG_ERROR(cobj_, 0, "can not post on step < 0");
+            return;
+        }
+        step_queue_.post(steps, evclass, obj, user_data);
+        step_event_posted_();
     }
 
     void riscv_cpu::cancel_step(
@@ -47,8 +56,7 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Cancel step events matching the predicate
-        // This is a placeholder implementation and does not interact with actual events
-        // TODO: interact with Simics event system here
+        step_queue_.remove(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
     pc_step_t riscv_cpu::find_next_step(
@@ -57,8 +65,7 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Return the number of steps to the next matching event
-        // For a simple model, return 0 (no events)
-        return 0; // No matching step event found
+        return step_queue_.next(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
     // attr_value_t riscv_cpu::events() {

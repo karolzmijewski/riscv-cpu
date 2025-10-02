@@ -25,11 +25,11 @@
 
 namespace kz::riscv::core {
 
-    static int match_all(lang_void *data, lang_void *match_data) {
+    static int match_all_(lang_void *data, lang_void *match_data) {
             return 1;
     }
 
-    void cycle_event_posted_() {
+    static void cycle_event_posted_() {
         /* An event has been posted. We only single step, so we don't need to
            bother. */
     }
@@ -88,7 +88,7 @@ namespace kz::riscv::core {
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data), lang_void *match_data) {
         // Cancel events matching the predicate
-        cycle_queue_.remove(evclass, obj, pred == NULL ? match_all : pred, match_data);
+        cycle_queue_.remove(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
     cycles_t riscv_cpu::find_next_cycle(
@@ -97,7 +97,7 @@ namespace kz::riscv::core {
         int (*pred)(lang_void *data, lang_void *match_data),
         lang_void *match_data) {
         // Return the number of cycles to the next matching event
-        return cycle_queue_.next(evclass, obj, pred == NULL ? match_all : pred, match_data);
+        return cycle_queue_.next(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
     double riscv_cpu::find_next_time(
