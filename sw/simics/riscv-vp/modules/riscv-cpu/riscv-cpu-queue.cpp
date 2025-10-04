@@ -111,10 +111,30 @@ namespace kz::riscv::core {
     }
 
     bool event_queue::add(attr_value_t *ev) {
-        // This is a placeholder implementation
-        // In a real implementation, you would parse the attr_value_t
-        // and add the corresponding event to the queue
-        return false;
+        conf_object_t *obj;
+        const char *ecname;
+        attr_value_t *val;
+        int64 slot;     /* ignored since it can be computed from the
+                           event class */
+        int64 when;
+        bool ret = SIM_ascanf(ev, "osaii", &obj, &ecname, &val, &slot, &when);
+
+        if (!ret || obj == nullptr) {
+            return false;
+        }
+        event_class_t *evclass = SIM_get_event_class(SIM_object_class(obj), ecname);
+        if (evclass == nullptr) {
+            return false;
+        }
+        lang_void *user_data = nullptr;
+        if (evclass->set_value != nullptr && !SIM_attr_is_invalid(*val)) {
+            user_data = evclass->set_value(obj, *val);
+            if (user_data == nullptr) {
+                return false;
+            }
+        }
+        post(when, evclass, obj, user_data);
+        return true;
     }
 
     int event_queue::is_empty() const {

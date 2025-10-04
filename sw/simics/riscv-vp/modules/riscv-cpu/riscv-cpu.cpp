@@ -48,6 +48,7 @@ namespace kz::riscv::core {
         current_step_ = 0;
         freq_hz_ = 100000000;  // Default frequency: 100 MHz
         time_offset_.val = {};
+        VT_set_object_clock(conf_obj, conf_obj);
     }
 
     riscv_cpu::riscv_cpu::~riscv_cpu() {}
@@ -127,6 +128,7 @@ namespace kz::riscv::core {
                 SIM_LOG_INFO(2, cobj_, 0, "Executing LOAD instruction");
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::STORE:
                 // Store instructions (e.g., SB, SH, SW)
@@ -134,6 +136,7 @@ namespace kz::riscv::core {
                 SIM_LOG_INFO(2, cobj_, 0, "Executing STORE instruction");
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::OP_IMM:
                 SIM_LOG_INFO(2, cobj_, 0, "Executing OP_IMM instruction");
@@ -195,6 +198,7 @@ namespace kz::riscv::core {
                 }
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::OP:
                 SIM_LOG_INFO(2, cobj_, 0, "Executing OP instruction");
@@ -312,6 +316,7 @@ namespace kz::riscv::core {
                     }
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::LUI:
                 // Load Upper Immediate
@@ -319,6 +324,7 @@ namespace kz::riscv::core {
                 write_reg_(dec_instr.rd, imm12);
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::AUIPC:
                 // Add Upper Immediate to PC
@@ -326,6 +332,7 @@ namespace kz::riscv::core {
                 write_reg_(dec_instr.rd, pc_ + imm12);
                 pc_ += INSTR_SIZE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::JAL:
                 // Jump and Link
@@ -333,6 +340,7 @@ namespace kz::riscv::core {
                 write_reg_(dec_instr.rd, pc_ + INSTR_SIZE);
                 pc_ += (int32_t)dec_instr.imm;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::JALR:
                 // Jump and Link Register
@@ -340,6 +348,7 @@ namespace kz::riscv::core {
                 write_reg_(dec_instr.rd, pc_ + INSTR_SIZE);
                 pc_ = (rs1_val + (int32_t)dec_instr.imm) & 0xFFFFFFFE;
                 inc_cycles_(1);
+                inc_steps_(1);
                 break;
             case operation_code_t::BRANCH:
                 // Branch instructions (e.g., BEQ, BNE, BLT, BGE, BLTU, BGEU)
@@ -352,6 +361,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     case 0b001: // BNE
                         if (rs1_val != rs2_val) {
@@ -360,6 +370,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     case 0b100: // BLT
                         if (static_cast<int32_t>(rs1_val) < static_cast<int32_t>(rs2_val)) {
@@ -368,6 +379,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     case 0b101: // BGE
                         if (static_cast<int32_t>(rs1_val) >= static_cast<int32_t>(rs2_val)) {
@@ -376,6 +388,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     case 0b110: // BLTU
                         if (static_cast<uint32_t>(rs1_val) < static_cast<uint32_t>(rs2_val)) {
@@ -384,6 +397,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     case 0b111: // BGEU
                         if (static_cast<uint32_t>(rs1_val) >= static_cast<uint32_t>(rs2_val)) {
@@ -392,6 +406,7 @@ namespace kz::riscv::core {
                             pc_ += INSTR_SIZE;
                         }
                         inc_cycles_(1);
+                        inc_steps_(1);
                         break;
                     default:
                         SIM_LOG_ERROR(

@@ -1,7 +1,7 @@
 # RISCV (RV32I) - Sotfware
-This section of the repository contains a RISC-V (RV32I) single-hart, simple Simics (software) CPU model,
-implemented at the TLM (Transaction-Level Modeling) level. It does not support superscalar execution or
-superspipelines.
+This section of the repository contains a RISC-V (RV32I) single-hart, 32-bit, in-order, non-pipelined,
+not-hyperthreading, simple Simics (software) CPU model, implemented at the TLM (Transaction-Level
+Modeling) level.
 
 The model executes the same binaries as the CPU model created for FPGA. Development is still in a very
 early stage. So far, only instruction fetching from RAM via `direct_memory` and `direct_memory_lookup`
@@ -41,21 +41,121 @@ p:0x10000060  0000 0000                                ....
 simics>
 ```
 
-If the `processor_cli` interface is manually triggered, the CPU fetches instruction pointed by
-address from memory, decodes it, and disassembles it. So far no proper cycle mechanism was
-created.
+To run the CPU:
 
 ```bash
-simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 0, 1, None)
-(4, 'riscv-cpu: li a1, 5')
-simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 4, 1, None)
-(4, 'riscv-cpu: addi a2, a1, 1')
-simics> @conf.rcpu.iface.processor_cli.get_disassembly("p", 8, 1, None)
-(4, 'riscv-cpu: andi a3, a2, 12')
-```
+simics> rcpu.log-level 4
+[rcpu] Changing log level: 1 -> 4
+simics> ptime
+┌─────────┬─────┬──────┬────────┐
+│Processor│Steps│Cycles│Time (s)│
+├─────────┼─────┼──────┼────────┤
+│rcpu     │    0│     0│   0.000│
+└─────────┴─────┴──────┴────────┘
+simics> rcpu.disassemble
+[rcpu info] direct memory: data[0]='0x93', data[1]='0x05', data[2]='0x50', data[3]='0x00'
+[rcpu info] instr: '0x500593'
+[rcpu info] dec_instr: opcode='0x04', rd='0x0b', func3='0x0', rs1='0x00', rs2='0x05', func7='0x00', type='0x2'
+[rcpu info] addr: 0x00000000 disassembled: li a1, 5
+li a1, 5
+simics> run count = 1
+[rcpu info] Start execution
+[rcpu info] Fetching instruction from address 0x00000000
+[rcpu info] Fetched instruction 0x00500593 from address 0x00000000
+[rcpu info] Decoding instruction 0x00500593
+[rcpu info] Executing OP_IMM instruction
+[rcpu info] Stop execution
+simics> pregs
+x0 (zero) = 0x00000000
+x1 (ra) = 0x00000000
+x2 (sp) = 0x00000000
+x3 (gp) = 0x00000000
+x4 (tp) = 0x00000000
+x5 (t0) = 0x00000000
+x6 (t1) = 0x00000000
+x7 (t2) = 0x00000000
+x8 (s0) = 0x00000000
+x9 (s1) = 0x00000000
+x10 (a0) = 0x00000000
+x11 (a1) = 0x00000005
+x12 (a2) = 0x00000000
+x13 (a3) = 0x00000000
+x14 (a4) = 0x00000000
+x15 (a5) = 0x00000000
+x16 (a6) = 0x00000000
+x17 (a7) = 0x00000000
+x18 (s2) = 0x00000000
+x19 (s3) = 0x00000000
+x20 (s4) = 0x00000000
+x21 (s5) = 0x00000000
+x22 (s6) = 0x00000000
+x23 (s7) = 0x00000000
+x24 (s8) = 0x00000000
+x25 (s9) = 0x00000000
+x26 (s10) = 0x00000000
+x27 (s11) = 0x00000000
+x28 (t3) = 0x00000000
+x29 (t4) = 0x00000000
+x30 (t5) = 0x00000000
+x31 (t6) = 0x00000000
 
-To see state of registers try:
+simics> ptime
+┌─────────┬─────┬──────┬────────┐
+│Processor│Steps│Cycles│Time (s)│
+├─────────┼─────┼──────┼────────┤
+│rcpu     │    1│     1│   0.000│
+└─────────┴─────┴──────┴────────┘
+simics> rcpu.disassemble
+[rcpu info] direct memory: data[0]='0x13', data[1]='0x86', data[2]='0x15', data[3]='0x00'
+[rcpu info] instr: '0x158613'
+[rcpu info] dec_instr: opcode='0x04', rd='0x0c', func3='0x0', rs1='0x0b', rs2='0x01', func7='0x00', type='0x2'
+[rcpu info] addr: 0x00000004 disassembled: addi a2, a1, 1
+addi a2, a1, 1
+simics> run count = 1
+[rcpu info] Start execution
+[rcpu info] Fetching instruction from address 0x00000004
+[rcpu info] Fetched instruction 0x00158613 from address 0x00000004
+[rcpu info] Decoding instruction 0x00158613
+[rcpu info] Executing OP_IMM instruction
+[rcpu info] Stop execution
+simics> pregs
+x0 (zero) = 0x00000000
+x1 (ra) = 0x00000000
+x2 (sp) = 0x00000000
+x3 (gp) = 0x00000000
+x4 (tp) = 0x00000000
+x5 (t0) = 0x00000000
+x6 (t1) = 0x00000000
+x7 (t2) = 0x00000000
+x8 (s0) = 0x00000000
+x9 (s1) = 0x00000000
+x10 (a0) = 0x00000000
+x11 (a1) = 0x00000005
+x12 (a2) = 0x00000006
+x13 (a3) = 0x00000000
+x14 (a4) = 0x00000000
+x15 (a5) = 0x00000000
+x16 (a6) = 0x00000000
+x17 (a7) = 0x00000000
+x18 (s2) = 0x00000000
+x19 (s3) = 0x00000000
+x20 (s4) = 0x00000000
+x21 (s5) = 0x00000000
+x22 (s6) = 0x00000000
+x23 (s7) = 0x00000000
+x24 (s8) = 0x00000000
+x25 (s9) = 0x00000000
+x26 (s10) = 0x00000000
+x27 (s11) = 0x00000000
+x28 (t3) = 0x00000000
+x29 (t4) = 0x00000000
+x30 (t5) = 0x00000000
+x31 (t6) = 0x00000000
 
-```bash
-simics> rcpu.pregs -all
+simics> ptime
+┌─────────┬─────┬──────┬────────┐
+│Processor│Steps│Cycles│Time (s)│
+├─────────┼─────┼──────┼────────┤
+│rcpu     │    2│     2│   0.000│
+└─────────┴─────┴──────┴────────┘
 ```

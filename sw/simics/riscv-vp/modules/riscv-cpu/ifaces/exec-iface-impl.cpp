@@ -25,7 +25,6 @@ namespace kz::riscv::core {
 
     void riscv_cpu::run() {
         // Called by Simics to start execution.
-        SIM_LOG_INFO(4, cobj_, 0, "Starting execution\n");
         state_ = execute_state_t::Running;
 
         // Check event queue for pending events, timers, etc. on current step and cycle
@@ -35,22 +34,16 @@ namespace kz::riscv::core {
         }
 
         while (state_ == execute_state_t::Running) {
-            if (is_enabled_) {
-                // Execute one quantum of instructions
-                // For simplicity, let's say we execute a fixed number of instructions per quantum
-                const pc_step_t quantum_size = 1; // Number of instructions per quantum
-                pc_step_t exec_counter = 0;
-                while (exec_counter < quantum_size && state_ == execute_state_t::Running) {
-                    // Fetch instruction at PC
-                    // Assuming 4-byte instructions (RV32I, without C extension, for compressed instructions)
-                    instr_t instr = fetch_(pc_);
-                    // Decode and execute instruction
-                    dec_instr_t dec_instr = decode_(instr);
-                    // Execute one instruction
-                    execute_(dec_instr);
-                    ++exec_counter;
-                }
-                steps_in_quantum_ += exec_counter;
+            if (is_enabled_ && stall_cycles_ == 0) {
+                SIM_LOG_INFO(4, cobj_, 0, "Start execution");
+                // Fetch instruction at PC
+                // Assuming 4-byte instructions (RV32I, without C extension, for compressed instructions)
+                instr_t instr = fetch_(pc_);
+                // Decode and execute instruction
+                dec_instr_t dec_instr = decode_(instr);
+                // Execute one instruction
+                execute_(dec_instr);
+                SIM_LOG_INFO(4, cobj_, 0, "Stop execution");
             } else {
                 // If the processor is disabled, we can either halt or just wait
                 simtime_t delta = cycle_queue_.get_delta();
@@ -64,14 +57,12 @@ namespace kz::riscv::core {
                 if (delta > 0) {
                     inc_cycles_(delta);
                 }
-
             }
             if (state_ == execute_state_t::Stopped) {
-                SIM_LOG_INFO(4, cobj_, 0, "Execution stopped\n");
+                SIM_LOG_INFO(4, cobj_, 0, "End processing\n");
                 break;
             }
-            // After each quantum, check for interrupts, events, etc.
-            // This is a placeholder for actual event handling logic
+            // Check for interrupts, events, etc.
             handle_events_(&cycle_queue_);
             if (is_enabled_) {
                 handle_events_(&step_queue_);
@@ -81,7 +72,6 @@ namespace kz::riscv::core {
 
     void riscv_cpu::stop() {
         // Called by Simics to stop execution.
-        SIM_LOG_INFO(4, cobj_, 0, "Execution stopping\n");
         state_ = execute_state_t::Stopped;
         VT_stop_event_processing(cobj_);
     }

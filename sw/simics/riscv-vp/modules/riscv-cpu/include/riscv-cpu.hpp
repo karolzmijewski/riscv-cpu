@@ -30,6 +30,7 @@
 #include <simics/c++/model-iface/step.h>
 #include <simics/c++/model-iface/cycle.h>
 #include <simics/c++/model-iface/cycle-event.h>
+#include <simics/c++/devs/frequency.h>
 
 #include "riscv-cpu-types.hpp"
 #include "riscv-cpu-conf.hpp"
@@ -553,6 +554,11 @@ namespace kz::riscv::core {
             cls->add(simics::iface::StepInterface::Info());
             // Cycle interface is used to support cycle-accurate simulation
             cls->add(simics::iface::CycleInterface::Info());
+            SIM_register_clock(
+                *cls, static_cast<const cycle_interface_t*>(
+                    simics::iface::CycleInterface::Info().cstruct()
+                )
+            );
             // Attributes
             cls->add(
                 simics::Attribute(
@@ -574,10 +580,12 @@ namespace kz::riscv::core {
             );
             cls->add(
                 simics::Attribute(
-                    "step_queue", "[[]|[osaii]]", "Step event queue.",
+                    "step_queue", "[]|[[osaii]]",
+                    "Step event queue: ((<i>object</i>, <i>evclass</i>, <i>value</i>, <i>slot</i>,"
+                    " <i>step</i>)*).",
                     [](conf_object_t *obj) -> attr_value_t {
                         auto *cpu = simics::from_obj<riscv_cpu>(obj);
-                        return cpu->step_queue_.to_attr_list(0); // or appropriate start value
+                        return cpu->step_queue_.to_attr_list(0);
                     },
                     [](conf_object_t *obj, attr_value_t *val) {
                         auto *cpu = simics::from_obj<riscv_cpu>(obj);
@@ -593,15 +601,23 @@ namespace kz::riscv::core {
             );
             cls->add(
                 simics::Attribute(
-                    "cycle_queue", "[]|[[osaii]]", "Cycle event queue.",
+                    "cycle_queue", "[]|[[osaii]]",
+                    "Cycle event queue: ((<i>object</i>, <i>evclass</i>, <i>value</i>, <i>slot</i>,"
+                    " <i>cycle</i>)*).",
                     [](conf_object_t *obj) -> attr_value_t {
                         auto *cpu = simics::from_obj<riscv_cpu>(obj);
-                        return cpu->cycle_queue_.to_attr_list(0); // or appropriate start value
+                        return cpu->cycle_queue_.to_attr_list(0);
                     },
                     [](conf_object_t *obj, attr_value_t *val) {
                         auto *cpu = simics::from_obj<riscv_cpu>(obj);
                         return cpu->cycle_queue_.set(val);
                     }
+                )
+            );
+            cls->add(
+                simics::Attribute(
+                    "pc", "i", "Program counter.",
+                    ATTR_CLS_VAR(riscv_cpu, pc_)
                 )
             );
         }

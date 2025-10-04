@@ -8,5 +8,5 @@ phys_mem.load-binary filename = ..\..\..\tests\test_op_imm_0.elf offset = 0x1000
 phys_mem.x address = 0x10000000 size = 100
 
 #@conf.rcpu.iface.processor_cli.get_disassembly("p", 0, 1, None)
-#@conf.default_cell0.iface.cell_inspection.set_current_processor_obj(conf.rcpu)
-#@conf.default_cell0.iface.cell_inspection.set_current_step_obj(conf.rcpu)
+@conf.default_cell0.iface.cell_inspection.set_current_processor_obj(conf.rcpu)
+@conf.default_cell0.iface.cell_inspection.set_current_step_obj(conf.rcpu)
