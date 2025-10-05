@@ -30,8 +30,7 @@ namespace kz::riscv::core {
     }
 
     static void cycle_event_posted_() {
-        /* An event has been posted. We only single step, so we don't need to
-           bother. */
+        // An event has been posted. We only single step, so we don't need to bother.
     }
 
     cycles_t riscv_cpu::get_cycle_count() {
@@ -185,7 +184,11 @@ namespace kz::riscv::core {
         lang_void *match_data) {
         return riscv_cpu_cycle::generic_find_next_time_in_ps(
             cobj_, evclass, obj, pred, match_data,
-            [this](event_class_t *evclass, conf_object_t *obj, int (*pred)(lang_void*, lang_void*), lang_void *match_data) -> cycles_t {
+            [this](
+                event_class_t *evclass,
+                conf_object_t *obj,
+                int (*pred)(lang_void*, lang_void*),
+                lang_void *match_data) -> cycles_t {
                 return this->find_next_cycle(evclass, obj, pred, match_data);
             }, freq_hz_);
     }

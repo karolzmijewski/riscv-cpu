@@ -2,6 +2,7 @@ run-command-file "targets/vacuum/vacuum.simics"
 
 @SIM_create_object("riscv_cpu", "rcpu", phys_mem=conf.phys_mem)
 rcpu->queue = rcpu
+rcpu.log-level 4
 
 phys_mem.map
 phys_mem.load-binary filename = ..\..\..\tests\test_op_imm_0.elf offset = 0x10000000

@@ -50,7 +50,7 @@ namespace kz::riscv::core {
         uint8* data = read_mem_(addr, INSTR_SIZE);
         SIM_LOG_INFO(
             4, cobj_, 0,
-            "direct memory: data[0]='0x%02x', data[1]='0x%02x', data[2]='0x%02x', data[3]='0x%02x'",
+            "Direct memory: data[0]='0x%02x', data[1]='0x%02x', data[2]='0x%02x', data[3]='0x%02x'",
             data[0], data[1], data[2], data[3]
         );
         // disassemble instruction

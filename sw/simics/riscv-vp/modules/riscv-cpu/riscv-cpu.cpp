@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include <simics/cc-api.h>
+#include <simics/base/clock.h>
 #include <simics/processor/processor-platform.h>
 #include <simics/c++/model-iface/direct-memory.h>
 
@@ -32,22 +33,26 @@ namespace kz::riscv::core {
     riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj)
     : simics::ConfObject(conf_obj), step_queue_("step-queue"), cycle_queue_("cycle-queue") {
         cobj_ = obj().object();
+        // general registers
         regs_.fill(0);
+        // control and status registers
         mstatus_ = 0;
         mepc_ = 0;
         mcause_ = 0;
         mtvec_ = 0;
         pc_ = 0;
+        // direct memory interface
         subsystem_ = 0;
-        steps_in_quantum_ = 0;
+        // state
         state_ = execute_state_t::Stopped;
         is_enabled_ = true;
         stall_cycles_ = 0;
         total_stall_cycles_ = 0;
         current_cycle_ = 0;
         current_step_ = 0;
-        freq_hz_ = 100000000;  // Default frequency: 100 MHz
         time_offset_.val = {};
+        // configuration
+        freq_hz_ = 100000000;  // Default frequency: 100 MHz
         VT_set_object_clock(conf_obj, conf_obj);
     }
 

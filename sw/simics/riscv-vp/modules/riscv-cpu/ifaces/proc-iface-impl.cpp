@@ -32,7 +32,10 @@ namespace kz::riscv::core {
         return static_cast<logical_address_t>(pc_);
     }
 
-    tuple_int_string_t riscv_cpu::disassemble(generic_address_t address, attr_value_t instruction_data, int sub_operation) {
+    tuple_int_string_t riscv_cpu::disassemble(
+        generic_address_t address,
+        attr_value_t instruction_data,
+        int sub_operation) {
         strbuf_t result_sb = sb_new("");
         // set type aliases
         using addr_t = kz::riscv::types::addr_t;

@@ -87,7 +87,6 @@ namespace kz::riscv::core {
 
     attr_value_t riscv_cpu::all_registers() {
         attr_value_t result = SIM_alloc_attr_list(ALL_REGS_NUM);
-
         for (int i = 0; i < ALL_REGS_NUM; ++i) {
             SIM_attr_list_set_item(&result, i,  SIM_make_attr_uint64(i));
         }
@@ -95,13 +94,14 @@ namespace kz::riscv::core {
     }
 
     int riscv_cpu::register_info(int reg, ireg_info_t info) {
+        constexpr int UNSUPPORTED = -1;
         switch (info) {
             case Sim_RegInfo_Catchable:
                 if (reg >= 0 && reg < RV32I_GP_REG_NUM) return 0; // x0..x31 are 32-bit
                 if (reg >= RV32I_GP_REG_NUM && reg <= ALL_REGS_NUM) return 0; // pc, mstatus, mepc, mcause, mtvec are 32-bit
-                return -1;
+                return UNSUPPORTED;
             default:
-                return -1; // Unsupported info type
+                return UNSUPPORTED;
         }
     }
 } /* ! kz::riscv::core ! */

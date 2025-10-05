@@ -28,8 +28,7 @@ namespace kz::riscv::core {
     }
 
     static void step_event_posted_() {
-        /* An event has been posted. We only single step, so we don't need to
-           bother. */
+        // An event has been posted. We only single step, so we don't need to bother.
     }
 
     pc_step_t riscv_cpu::get_step_count() {
@@ -77,7 +76,7 @@ namespace kz::riscv::core {
     pc_step_t riscv_cpu::advance(pc_step_t steps) {
         // Advance the CPU by 'steps' instructions
         SIM_LOG_INFO(1, cobj_, 0, "Advancing CPU by %llu steps", steps);
-        /* do nothing */
+        // do nothing
         return steps;
     }
 } /* ! kz::riscv::core ! */

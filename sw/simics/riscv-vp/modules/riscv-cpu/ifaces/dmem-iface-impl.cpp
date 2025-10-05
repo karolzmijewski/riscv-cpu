@@ -25,7 +25,7 @@ namespace kz::riscv::core {
         conf_object_t *target,
         direct_memory_handle_t handle,
         direct_memory_ack_id_t id) {
-        // TBD
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::release() not implemented yet");
     }
 
     void riscv_cpu::update_permission(
@@ -35,7 +35,7 @@ namespace kz::riscv::core {
         access_t lost_permission,
         access_t lost_inhibit,
         direct_memory_ack_id_t id) {
-        // TBD
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::update_permission() not implemented yet");
     }
 
     void riscv_cpu::conflicting_access(
@@ -43,6 +43,6 @@ namespace kz::riscv::core {
         direct_memory_handle_t handle,
         access_t conflicting_permission,
         direct_memory_ack_id_t id) {
-        // TBD
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::conflicting_access() not implemented yet");
     }
 } /* ! kz::riscv::core ! */

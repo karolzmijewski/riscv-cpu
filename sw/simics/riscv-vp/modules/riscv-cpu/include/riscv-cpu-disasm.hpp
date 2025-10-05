@@ -33,10 +33,46 @@ namespace kz::riscv::core {
         using operation_code_t = kz::riscv::types::operation_code_t;
         using addr_t = kz::riscv::types::addr_t;
     public:
+        /**
+         * Get a string representation of the operation type.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param type [M][In] The operation type to be converted to a string.
+         * @return A string representation of the operation type.
+         */
         static std::string get_type(op_type_t type);
+        /**
+         * Get a string representation of the opcode.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param opcode [M][In] The opcode to be converted to a string.
+         * @return A string representation of the opcode.
+         */
         static std::string get_opcode(opcode_t opcode);
+        /**
+         * Get the name of the register corresponding to the given register number.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param reg_nr [M][In] The register number (0-31 for x0-x31).
+         * @param symb [O][In] If true, return symbolic names (e.g., "zero", "ra").
+         *                     If false, return numeric names (e.g., "x0", "x1").
+         *                     Default is true.
+         * @return The name of the register as a string.
+         */
         static std::string get_reg_name(reg_nr_t reg_nr, bool symb=true);
+        /**
+         * Get the mnemonic for the given opcode and decoded instruction.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param opcode [M][In] The opcode of the instruction.
+         * @param dec_instr [M][In] The decoded instruction structure.
+         * @return The mnemonic of the instruction as a string.
+         */
         static std::string get_mnemonic(opcode_t opcode, dec_instr_t dec_instr);
+        /**
+         * Disassemble the given decoded instruction into a human-readable assembly
+         * instruction string.
+         * M/O - Mandatory/Optional, In/Out - Input/Output.
+         * @param pc [M][In] The program counter (address) of the instruction.
+         * @param dec_instr [M][In] The decoded instruction structure.
+         * @return A string representing the disassembled instruction.
+         */
         static std::string disasm(addr_t pc, dec_instr_t dec_instr);
     };
 } /* ! kz::riscv::core ! */

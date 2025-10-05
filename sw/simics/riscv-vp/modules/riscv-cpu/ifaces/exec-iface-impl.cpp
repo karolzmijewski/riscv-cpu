@@ -26,13 +26,12 @@ namespace kz::riscv::core {
     void riscv_cpu::run() {
         // Called by Simics to start execution.
         state_ = execute_state_t::Running;
-
         // Check event queue for pending events, timers, etc. on current step and cycle
         handle_events_(&cycle_queue_);
         if (is_enabled_) {
             handle_events_(&step_queue_);
         }
-
+        // Main execution loop
         while (state_ == execute_state_t::Running) {
             if (is_enabled_ && stall_cycles_ == 0) {
                 SIM_LOG_INFO(4, cobj_, 0, "Start execution");
@@ -79,10 +78,12 @@ namespace kz::riscv::core {
     void riscv_cpu::switch_in() {
         // Called when this CPU becomes the active one in the simulation.
         // Set up state or resources here if needed.
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::switch_in() not implemented yet");
     }
 
     void riscv_cpu::switch_out() {
         // Called when this CPU is no longer the active one.
         // Clean up or save state if needed.
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::switch_out() not implemented yet");
     }
 } /* ! kz::riscv::core ! */

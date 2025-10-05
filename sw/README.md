@@ -4,10 +4,9 @@ not-hyperthreading, simple Simics (software) CPU model, implemented at the TLM (
 Modeling) level.
 
 The model executes the same binaries as the CPU model created for FPGA. Development is still in a very
-early stage. So far, only instruction fetching from RAM via `direct_memory` and `direct_memory_lookup`
-interfaces, along with instruction decoding and disassembly logic, have been implemented. Most of the
-interfaces and functionalities required to make the model functional at a very basic level are still
-in progress.
+early stage. So far, instruction fetch-decode-execute path, along with instruction decoding and
+disassembly logic, have been implemented. Most of the interfaces and functionalities required
+to make the model functional at a very basic level are still in progress.
 
 # Run
 The CPU model is currently running in vacuum mode — an environment provided by Simics for developing

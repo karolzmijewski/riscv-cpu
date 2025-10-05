@@ -19,11 +19,13 @@
 
 #pragma once
 
+#include <string>
+#include <deque>
+
 #include <simics/base/types.h>
 #include <simics/base/event.h>
 #include <simics/base/time.h>
 #include <simics/processor/types.h>
-#include <string>
 
 namespace kz::riscv::core {
     class event {
@@ -59,11 +61,7 @@ namespace kz::riscv::core {
             const conf_object_t* obj,
             int (*pred)(lang_void* data, void* match_data),
             void* match_data);
-        void post(
-            simtime_t when,
-            event_class_t* evclass,
-            conf_object_t* obj,
-            lang_void* param);
+        void post(simtime_t when, event_class_t* evclass, conf_object_t* obj, lang_void* param);
         void rescale_time(uint64 old_freq, uint64 new_freq);
         bool add(attr_value_t *ev);
         int is_empty() const;

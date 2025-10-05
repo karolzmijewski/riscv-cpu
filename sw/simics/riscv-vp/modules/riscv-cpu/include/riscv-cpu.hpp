@@ -55,16 +55,15 @@ namespace kz::riscv::core {
         using dec_instr_t = kz::riscv::types::dec_instr_t;
         // attributes
         conf_object_t *cobj_;
-        uint64_t subsystem_;
         std::array<uint32_t, RV32I_GP_REG_NUM> regs_; // x0..x31
         uint32_t pc_;
         uint32_t mstatus_, mepc_, mcause_, mtvec_;
         direct_memory_lookup_t mem_handler_;
         simics::Connect<simics::iface::DirectMemoryLookupInterface> phys_mem_;
         // state
+        uint64_t subsystem_;
         execute_state_t state_;
         bool is_enabled_;
-        uint64_t steps_in_quantum_;
         uint64_t freq_hz_;
         cycles_t current_cycle_;
         cycles_t stall_cycles_;
@@ -166,6 +165,7 @@ namespace kz::riscv::core {
         physical_block_t translate_to_physical(
             const char *prefix,
             generic_address_t address) override;
+
         // ! DirectMemoryUpdateInterface (dmem-iface-impl) !
         /**
          * Method is called to release a direct memory mapping previously obtained
@@ -208,11 +208,13 @@ namespace kz::riscv::core {
             direct_memory_handle_t handle,
             access_t conflicting_permission,
             direct_memory_ack_id_t id) override;
+
         // ! StepInterface (step-iface-impl) !
         /** Method returns the number of steps that corresponds to one unit of execution.
          * For a CPU this is typically one instruction, but it could be more for a VLIW
          * (Very Long Instruction Word) architecture, or less for a very simple CPU that
          * can only execute part of an instruction in one step.
+         * @return The number of steps that corresponds to one unit of execution.
          */
         pc_step_t get_step_count() override;
         /**
@@ -220,6 +222,12 @@ namespace kz::riscv::core {
          * after the given number of steps have been executed. The event will be posted
          * to the specified event class and object. The user_data parameter is a pointer
          * that will be passed to the event callback when the event is posted.
+         * @param evclass the event class to post the event to
+         * @param obj the object to post the event to
+         * @param steps the number of steps to wait before posting the event
+         * @param user_data a pointer that will be passed to the event callback when the event
+         *   is posted.
+         * @return The number of steps until the event is posted.
          */
         void post_step(
             event_class_t *evclass,
@@ -230,6 +238,12 @@ namespace kz::riscv::core {
          * Method is used to cancel step events that have been posted with post_step.
          * The pred parameter is a pointer to a function that will be called for each
          * posted event. If the function returns true, the event will be canceled.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param pred a pointer to a function that will be called for each posted event. If the
+         *    function returns true, the event will be canceled.
+         * @param match_data a pointer that will be passed to the pred function when it is called.
+         * @return The number of step events that were canceled.
          */
         void cancel_step(
             event_class_t *evclass,
@@ -238,6 +252,15 @@ namespace kz::riscv::core {
             lang_void *match_data) override;
         /**
          * Method is used to find the next step event that has been posted with post_step.
+         * The pred parameter is a pointer to a function that will be called for each
+         * posted event. If the function returns true, the event will be returned.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param pred a pointer to a function that will be called for each posted event. If the
+         *     function returns true, the event will be returned.
+         * @param match_data a pointer that will be passed to the pred function when it is called.
+         * @return The number of steps until the next matching event, or -1 if no matching event is
+         *     found.
          */
         pc_step_t find_next_step(
             event_class_t *evclass,
@@ -261,6 +284,7 @@ namespace kz::riscv::core {
          * @return The number of steps that were actually executed.
          */
         pc_step_t advance(pc_step_t steps) override;
+
         // ! ExecuteInterface (exec-iface-impl) !
         /**
          * Starts execution of the CPU. This function is called to start/restart the CPU executing.
@@ -296,19 +320,23 @@ namespace kz::riscv::core {
          * increasing value that represents the number of cycles that have been executed by the CPU.
          * The cycle count is typically incremented by one for each cycle, but it can be incremented
          * by more than one for CPUs that can execute multiple cycles in parallel.
+         * @return current cycle count
          */
         cycles_t get_cycle_count() override;
         /**
          * Method returns the current time in seconds. The time is typically derived from the
          * cycle count and the CPU frequency.
+         * @return current time in seconds
          */
         double get_time() override;
         /**
          * Method returns the number of cycles that have elapsed since the given time in seconds.
+         * @return number of cycles since the given time in seconds.
          */
         cycles_t cycles_delta(double when) override;
         /**
          * Method returns the frequency of the CPU in Hz.
+         * @return frequency in Hz
          */
         uint64_t get_frequency() override;
         /**
@@ -316,6 +344,11 @@ namespace kz::riscv::core {
          * after the given number of cycles have been executed. The event will be posted
          * to the specified event class and object. The user_data parameter is a pointer
          * that will be passed to the event callback when the event is posted.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param cycles the number of cycles after which the event should be posted
+         * @param user_data a pointer that will be passed to the event callback when the event
+         *   is posted. This parameter can be used to pass additional data to the event callback.
          */
         void post_cycle(
             event_class_t *evclass,
@@ -327,6 +360,12 @@ namespace kz::riscv::core {
          * after the given time has elapsed. The event will be posted
          * to the specified event class and object. The user_data parameter is a pointer
          * that will be passed to the event callback when the event is posted.
+         * @note This method is similar to post_cycle, but uses time in seconds instead of cycles.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param seconds the time in seconds after which the event should be posted
+         * @param user_data a pointer that will be passed to the event callback when the event is posted.
+         * @note This parameter can be used to pass additional data to the event callback.
          */
         void post_time(
             event_class_t *evclass,
@@ -337,6 +376,11 @@ namespace kz::riscv::core {
          * Method is used to cancel cycle events that have been posted with post_cycle.
          * The pred parameter is a pointer to a function that will be called for each
          * posted event. If the function returns true, the event will be canceled.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         *  @param pred a pointer to a function that will be called for each posted event.
+         *    If the function returns true, the event will be canceled.
+         * @param match_data a pointer that will be passed to the pred function when it is called.
          */
         void cancel(
             event_class_t *evclass,
@@ -351,6 +395,13 @@ namespace kz::riscv::core {
          * a special value indicating that there are no more events.
          * The pred parameter is a pointer to a function that will be called for each
          * posted event. If the function returns true, the event is considered a match.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param pred a pointer to a function that will be called for each posted event.
+         *     If the function returns true, the event is considered a match.
+         * @param match_data a pointer that will be passed to the pred function when it is called.
+         * @return The number of cycles until the next matching event, or a special value if no
+         *     matching event is found.
          */
         cycles_t find_next_cycle(
             event_class_t *evclass,
@@ -364,6 +415,14 @@ namespace kz::riscv::core {
          * a special value indicating that there are no more events.
          * The pred parameter is a pointer to a function that will be called for each
          * posted event. If the function returns true, the event is considered a match.
+         * @note This method is similar to find_next_cycle, but uses time in seconds instead of cycles.
+         * @param evclass The event class to match, or NULL to match all event classes.
+         * @param obj The object to match, or NULL to match all objects.
+         * @param pred A pointer to a function that will be called for each posted event.
+         *     If the function returns true, the event is considered a match.
+         * @param match_data A pointer that will be passed to the pred function when it is called.
+         * @return The time in seconds until the next matching event, or a special value if no
+         *     matching event is found.
          */
         double find_next_time(
             event_class_t *evclass,
@@ -377,10 +436,14 @@ namespace kz::riscv::core {
         /**
          * Method returns the current time in picoseconds. The time is typically derived from the
          * cycle count and the CPU frequency.
+         * @note This method is similar to get_time, but returns the time in picoseconds.
+         * @return The current time in picoseconds.
          */
         local_time_t get_time_in_ps() override;
         /**
          * Method returns the number of picoseconds that have elapsed since the given time.
+         * @param when The time in picoseconds to calculate the delta from.
+         * @return The number of picoseconds that have elapsed since the given time.
          */
         cycles_t cycles_delta_from_ps(local_time_t when) override;
         /**
@@ -388,10 +451,16 @@ namespace kz::riscv::core {
          */
         //uint64_t get_frequency() override;
         /**
-         * Method is used to post a time event after 'picoseconds' picoseconds. The event will be posted
-         * after the given time has elapsed. The event will be posted
+         * Method is used to post a time event after 'picoseconds' picoseconds. The event will be
+         * posted after the given time has elapsed. The event will be posted
          * to the specified event class and object. The user_data parameter is a pointer
          * that will be passed to the event callback when the event is posted.
+         * @note This method is similar to post_time, but uses picoseconds instead of seconds.
+         * @param evclass the event class to post the event to
+         * @param obj the object to post the event to
+         * @param picoseconds the time in picoseconds after which the event should be posted
+         * @param user_data a pointer that will be passed to the event callback when the event is
+         *     posted
          */
         void post_time_in_ps(
             event_class_t *evclass,
@@ -402,6 +471,12 @@ namespace kz::riscv::core {
          * Method is used to cancel time events that have been posted with post_time_in_ps.
          * The pred parameter is a pointer to a function that will be called for each
          * posted event. If the function returns true, the event will be canceled.
+         * @param evclass the event class to match, or NULL to match all event classes
+         * @param obj the object to match, or NULL to match all objects
+         * @param pred a pointer to a function that will be called for each posted event.
+         *     If the function returns true, the event will be canceled.
+         * @param match_data a pointer that will be passed to the pred function when it is called.
+         * @return the number of events that were canceled.
          */
         duration_t find_next_time_in_ps(
             event_class_t *evclass,
@@ -417,19 +492,27 @@ namespace kz::riscv::core {
         // limitation is that the register value should be representable as a 64-bit
         // unsigned integer.
         /**
-         * Translates a register name to its number. Returns -1 if the register does not exist.
+         * Translates a register name to its number.
+         * @param name The name of the register to translate.
+         * @return -1 if the register does not exist.
          */
         int get_number(const char *name) override;
         /**
          * Translates a register number to its canonical name.
+         * @param reg The number of the register to translate.
+         * @return NULL if the register does not exist.
          */
         const char *get_name(int reg) override;
         /**
          * Reads a register value.
+         * @param reg The number of the register to read.
+         * @return The value of the register.
          */
         uint64 read(int reg) override;
         /**
          * Writes a new register value.
+         * @param reg The number of the register to write.
+         * @param val The new value of the register.
          */
         void write(int reg, uint64 val) override;
         /**
@@ -437,7 +520,11 @@ namespace kz::riscv::core {
          */
         attr_value_t all_registers() override;
         /**
-         * returns information about a single register. The information return depends on the info parameter
+         * Get information about a single register. The information return depends on the info
+         * parameter.
+         * @param reg The number of the register to get information about.
+         * @param info The type of information to return.
+         * @return The requested information about the register.
          */
         int register_info(int reg, ireg_info_t info) override;
 
@@ -463,6 +550,7 @@ namespace kz::riscv::core {
          * @param sub_operation Used to select which sub-operation to disassemble. The sub-operations
          *     start at zero, and a request for the entire unit including all sub-operations is encoded
          *     with sub-operation -1.
+         * @return A tuple with the length of the instruction in bytes and the disassembly string.
          */
         tuple_int_string_t disassemble(
             generic_address_t address,
@@ -475,6 +563,10 @@ namespace kz::riscv::core {
          * and block_end. The start and end of a block has the same logical to physical transformation as
          * the translated address. The range is inclusive, so block_end should be the address of the last
          * byte of the block.
+         * @param address The logical address to translate.
+         * @param access_type The type of access to translate. The access_type is one of the access_t
+         *     enum values.
+         * @return A physical_block_t struct with the translation result.
          */
         physical_block_t logical_to_physical(
             logical_address_t address,
@@ -482,6 +574,7 @@ namespace kz::riscv::core {
         /**
          * Function returns the current processor mode. The return value is one of the processor_mode_t
          * enum values.
+         * @return The current processor mode.
          */
         processor_mode_t get_processor_mode() override;
         /**
@@ -503,6 +596,7 @@ namespace kz::riscv::core {
         /**
          * Function returns the endian of the processor. The return value is one of the cpu_endian_t
          * enum values.
+         * @return The endian of the processor.
          */
         cpu_endian_t get_endian() override;
         /**
@@ -528,6 +622,7 @@ namespace kz::riscv::core {
          * The architecture string is a short string that identifies the architecture of the processor.
          * It is used by Simics to determine which binaries can run on the processor.
          * Examples of architecture strings are "x86", "arm", "mips", "riscv".
+         * @return The architecture string of the processor.
          */
         const char *architecture() override;
 
