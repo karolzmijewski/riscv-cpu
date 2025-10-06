@@ -23,7 +23,7 @@
 #include "riscv-cpu-types.hpp"
 
 namespace kz::riscv::core {
-    class riscv_cpu_disasm {
+    class RiscvCpuDisasm {
     private:
         using op_type_t = kz::riscv::types::op_type_t;
         using opcode_t = kz::riscv::types::opcode_t;

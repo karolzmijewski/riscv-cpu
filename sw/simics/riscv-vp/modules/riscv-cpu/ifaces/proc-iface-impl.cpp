@@ -24,15 +24,15 @@
 #include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
-    void riscv_cpu::set_program_counter(logical_address_t pc) {
+    void RiscvCpu::set_program_counter(logical_address_t pc) {
         pc_ = static_cast<uint32_t>(pc);
     }
 
-    logical_address_t riscv_cpu::get_program_counter() {
+    logical_address_t RiscvCpu::get_program_counter() {
         return static_cast<logical_address_t>(pc_);
     }
 
-    tuple_int_string_t riscv_cpu::disassemble(
+    tuple_int_string_t RiscvCpu::disassemble(
         generic_address_t address,
         attr_value_t instruction_data,
         int sub_operation) {
@@ -81,7 +81,7 @@ namespace kz::riscv::core {
         SIM_LOG_INFO(4, cobj_, 0, "instr: '0x%04x'", instr);
         // decode instruction
         dec_instr_t dec_instr;
-        riscv_cpu_decoder::decode(instr, &dec_instr);
+        RiscvCpuDecoder::decode(instr, &dec_instr);
         SIM_LOG_INFO(
             4, cobj_, 0,
             "dec_instr: opcode='0x%02x', rd='0x%02x', func3='0x%01x', "
@@ -93,7 +93,7 @@ namespace kz::riscv::core {
         );
         // disassemble instruction
         addr_t addr = static_cast<addr_t>(address);
-        std::string disasm_instr = riscv_cpu_disasm::disasm(addr, dec_instr);
+        std::string disasm_instr = RiscvCpuDisasm::disasm(addr, dec_instr);
         SIM_LOG_INFO(
             4, cobj_, 0,
             "addr: 0x%08x disassembled: %s",
@@ -103,7 +103,7 @@ namespace kz::riscv::core {
         return {INSTR_SIZE, sb_detach(&result_sb)};
     }
 
-    physical_block_t riscv_cpu::logical_to_physical(logical_address_t address, access_t access_type) {
+    physical_block_t RiscvCpu::logical_to_physical(logical_address_t address, access_t access_type) {
         // So far no MMu no paging, direct mapping. The logical and physical address are the same.
         // The block is a single address, no range. This is standard for simple CPUs or when running
         // in machine mode without virtual memory.
@@ -115,11 +115,11 @@ namespace kz::riscv::core {
         return block;
     }
 
-    processor_mode_t riscv_cpu::get_processor_mode() {
+    processor_mode_t RiscvCpu::get_processor_mode() {
         return Sim_CPU_Mode_User;
     }
 
-    int riscv_cpu::enable_processor() {
+    int RiscvCpu::enable_processor() {
         SIM_LOG_INFO(4, cobj_, 0, "Enabling processor (no-op)");
         if (is_enabled_) {
             SIM_LOG_INFO(4, cobj_, 0, "Processor already enabled");
@@ -129,7 +129,7 @@ namespace kz::riscv::core {
         return 0;
     }
 
-    int riscv_cpu::disable_processor() {
+    int RiscvCpu::disable_processor() {
         SIM_LOG_INFO(4, cobj_, 0, "Disabling processor (no-op)");
         if (!is_enabled_) {
             SIM_LOG_INFO(4, cobj_, 0, "Processor already disabled");
@@ -139,27 +139,27 @@ namespace kz::riscv::core {
         return 0;
     }
 
-    int riscv_cpu::get_enabled() {
+    int RiscvCpu::get_enabled() {
         return is_enabled_ ? 1 : 0;
     }
 
-    cpu_endian_t riscv_cpu::get_endian() {
+    cpu_endian_t RiscvCpu::get_endian() {
         return Sim_Endian_Little;
     }
 
-    conf_object_t * riscv_cpu::get_physical_memory() {
+    conf_object_t * RiscvCpu::get_physical_memory() {
         return phys_mem_;
     }
 
-    int riscv_cpu::get_logical_address_width() {
+    int RiscvCpu::get_logical_address_width() {
         return RAM_ADDR_WIDTH;
     }
 
-    int riscv_cpu::get_physical_address_width() {
+    int RiscvCpu::get_physical_address_width() {
         return RAM_ADDR_WIDTH;
     }
 
-    const char *riscv_cpu::architecture() {
+    const char *RiscvCpu::architecture() {
         return "riscv";
     }
 } /* ! kz::riscv::core ! */

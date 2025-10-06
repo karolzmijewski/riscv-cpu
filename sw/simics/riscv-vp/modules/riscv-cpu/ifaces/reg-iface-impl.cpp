@@ -22,7 +22,7 @@
 #include "riscv-cpu-conf.hpp"
 
 namespace kz::riscv::core {
-    int riscv_cpu::get_number(const char *name) {
+    int RiscvCpu::get_number(const char *name) {
         if (strcmp(name, "pc") == 0) return 32;
         if (strcmp(name, "mstatus") == 0) return 33;
         if (strcmp(name, "mepc") == 0) return 34;
@@ -38,7 +38,7 @@ namespace kz::riscv::core {
         return -1;
     }
 
-    const char *riscv_cpu::get_name(int reg) {
+    const char *RiscvCpu::get_name(int reg) {
         if (reg == 32) return "pc";
         if (reg == 33) return "mstatus";
         if (reg == 34) return "mepc";
@@ -46,13 +46,13 @@ namespace kz::riscv::core {
         if (reg == 36) return "mtvec";
         if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             strbuf_t regs_sb = sb_new("");
-            sb_addstr(&regs_sb, riscv_cpu_disasm::get_reg_name(reg, false).c_str());
+            sb_addstr(&regs_sb, RiscvCpuDisasm::get_reg_name(reg, false).c_str());
             return sb_detach(&regs_sb);
         }
         return nullptr;
     }
 
-    uint64 riscv_cpu::read(int reg) {
+    uint64 RiscvCpu::read(int reg) {
         if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             return regs_[reg];
         }
@@ -67,7 +67,7 @@ namespace kz::riscv::core {
         }
     }
 
-    void riscv_cpu::write(int reg, uint64 val) {
+    void RiscvCpu::write(int reg, uint64 val) {
         if (reg >= 0 && reg < RV32I_GP_REG_NUM) {
             if (reg != 0) { // x0 is hardwired to zero
                 regs_[reg] = static_cast<uint32_t>(val);
@@ -85,7 +85,7 @@ namespace kz::riscv::core {
         }
     }
 
-    attr_value_t riscv_cpu::all_registers() {
+    attr_value_t RiscvCpu::all_registers() {
         attr_value_t result = SIM_alloc_attr_list(ALL_REGS_NUM);
         for (int i = 0; i < ALL_REGS_NUM; ++i) {
             SIM_attr_list_set_item(&result, i,  SIM_make_attr_uint64(i));
@@ -93,7 +93,7 @@ namespace kz::riscv::core {
         return result;
     }
 
-    int riscv_cpu::register_info(int reg, ireg_info_t info) {
+    int RiscvCpu::register_info(int reg, ireg_info_t info) {
         constexpr int UNSUPPORTED = -1;
         switch (info) {
             case Sim_RegInfo_Catchable:

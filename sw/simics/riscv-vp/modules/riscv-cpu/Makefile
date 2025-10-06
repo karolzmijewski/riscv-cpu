@@ -33,7 +33,8 @@ SRC_FILES = riscv-cpu.cpp \
             ifaces/proc-iface-impl.cpp \
             ifaces/proc-cli-iface-impl.cpp \
             ifaces/dmem-iface-impl.cpp \
-            ifaces/cycle-iface-impl.cpp
+            ifaces/cycle-iface-impl.cpp \
+            ifaces/freq-iface-impl.cpp
 
 PYTHON_FILES = module_load.py
 MODULE_CFLAGS += -I$(CURRENT_DIR)/include

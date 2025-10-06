@@ -21,28 +21,28 @@
 #include "riscv-cpu.hpp"
 
 namespace kz::riscv::core {
-    void riscv_cpu::release(
+    void RiscvCpu::release(
         conf_object_t *target,
         direct_memory_handle_t handle,
         direct_memory_ack_id_t id) {
-        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::release() not implemented yet");
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "RiscvCpu::release() not implemented yet");
     }
 
-    void riscv_cpu::update_permission(
+    void RiscvCpu::update_permission(
         conf_object_t *target,
         direct_memory_handle_t handle,
         access_t lost_access,
         access_t lost_permission,
         access_t lost_inhibit,
         direct_memory_ack_id_t id) {
-        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::update_permission() not implemented yet");
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "RiscvCpu::update_permission() not implemented yet");
     }
 
-    void riscv_cpu::conflicting_access(
+    void RiscvCpu::conflicting_access(
         conf_object_t *target,
         direct_memory_handle_t handle,
         access_t conflicting_permission,
         direct_memory_ack_id_t id) {
-        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "riscv_cpu::conflicting_access() not implemented yet");
+        SIM_LOG_UNIMPLEMENTED(3, cobj_, 0, "RiscvCpu::conflicting_access() not implemented yet");
     }
 } /* ! kz::riscv::core ! */

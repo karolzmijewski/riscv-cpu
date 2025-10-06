@@ -23,21 +23,13 @@
 #include <simics/processor/types.h>
 #include <string>
 #include <deque>
+#include <vector>
 #include <algorithm>
 
 #include "riscv-cpu-queue.hpp"
 
 namespace kz::riscv::core {
-    // ! Event !
-    event::event()
-        : next(EVENT_QUEUE_END),
-          delta(0),
-          slot(0),
-          evclass(nullptr),
-          obj(nullptr),
-          param(nullptr) {}
-
-    event::event(simtime_t d, int s, event_class_t *ec, conf_object_t *o, lang_void *p)
+    Event::Event(simtime_t d, int s, event_class_t *ec, conf_object_t *o, lang_void *p)
         : next(EVENT_QUEUE_END),
           delta(d),
           slot(s),
@@ -45,9 +37,9 @@ namespace kz::riscv::core {
           obj(o),
           param(p) {}
 
-    event::~event() {}
+    Event::~Event() {}
 
-    attr_value_t event::to_attr_val(simtime_t time) const {
+    attr_value_t Event::to_attr_val(simtime_t time) const {
         if (evclass->flags & Sim_EC_Notsaved) {
             return SIM_make_attr_invalid(); /* don't save this attribute */
         }
@@ -66,18 +58,18 @@ namespace kz::riscv::core {
     }
 
     // ! Event Queue !
-    event_queue::event_queue(const char *name) : name_(name) {}
-    event_queue::~event_queue() = default;
+    EventQueue::EventQueue(const char *name) : name_(name) {}
+    EventQueue::~EventQueue() = default;
 
-    void event_queue::init(const char *name) { name_ = name; }
+    void EventQueue::init(const char *name) { name_ = name; }
 
-    simtime_t event_queue::next(
+    simtime_t EventQueue::next(
         const event_class_t* evclass,
         const conf_object_t* obj,
         int (*pred)(lang_void* data, void* match_data),
         void* match_data) {
         auto it = std::find_if(events_.begin(), events_.end(),
-            [&](const event& e) {
+            [&](const Event& e) {
                 return (!evclass || e.evclass == evclass) &&
                        (!obj || e.obj == obj) &&
                        (!pred || pred(e.param, match_data));
@@ -85,13 +77,13 @@ namespace kz::riscv::core {
         return (it != events_.end()) ? it->delta : 0;
     }
 
-    void event_queue::remove(
+    void EventQueue::remove(
         event_class_t *evclass,
         const conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
         void *match_data) {
         auto it = std::remove_if(events_.begin(), events_.end(),
-            [&](const event& e) {
+            [&](const Event& e) {
                 return (!evclass || e.evclass == evclass) &&
                        (!obj || e.obj == obj) &&
                        (!pred || pred(e.param, match_data));
@@ -99,18 +91,33 @@ namespace kz::riscv::core {
         events_.erase(it, events_.end());
     }
 
-    void event_queue::post(simtime_t when, event_class_t* evclass, conf_object_t* obj, lang_void* param) {
+    void EventQueue::post(simtime_t when, event_class_t* evclass, conf_object_t* obj, lang_void* param) {
         // slot can be used for ordering if needed, here set to 0
         events_.emplace_back(when, 0, evclass, obj, param);
     }
 
-    void event_queue::rescale_time(uint64 old_freq, uint64 new_freq) {
-        for (auto& e : events_) {
-            e.delta = (e.delta * old_freq) / new_freq;
+    void EventQueue::rescale_time(uint64 old_freq, uint64 new_freq) {
+        // Step 1: Convert deltas to absolute times
+        std::vector<simtime_t> abs_times;
+        simtime_t total_delta = 0;
+        for (const auto& e : events_) {
+            total_delta += e.delta;
+            abs_times.push_back(total_delta);
+        }
+        // Step 2: Rescale absolute times
+        for (auto& t : abs_times) {
+            t = static_cast<simtime_t>((double)t * new_freq / old_freq + 0.5);
+        }
+        // Step 3: Convert back to deltas
+        simtime_t prev_time = 0;
+        for (size_t i = 0; i < events_.size(); ++i) {
+            simtime_t new_delta = abs_times[i] - prev_time;
+            events_[i].delta = new_delta;
+            prev_time = abs_times[i];
         }
     }
 
-    bool event_queue::add(attr_value_t *ev) {
+    bool EventQueue::add(attr_value_t *ev) {
         conf_object_t *obj;
         const char *ecname;
         attr_value_t *val;
@@ -137,11 +144,11 @@ namespace kz::riscv::core {
         return true;
     }
 
-    int event_queue::is_empty() const {
+    int EventQueue::is_empty() const {
         return events_.empty();
     }
 
-    void event_queue::decrement(simtime_t delta) {
+    void EventQueue::decrement(simtime_t delta) {
         for (auto& e : events_) {
             if (e.delta > delta) {
                 e.delta -= delta;
@@ -151,14 +158,14 @@ namespace kz::riscv::core {
         }
     }
 
-    simtime_t event_queue::get_delta() const {
+    simtime_t EventQueue::get_delta() const {
         if (events_.empty()) {
             return -1;
         }
         return events_.front().delta;
     }
 
-    void event_queue::handle_next() {
+    void EventQueue::handle_next() {
         if (!events_.empty()) {
             auto e = events_.front();
             events_.pop_front();
@@ -168,7 +175,7 @@ namespace kz::riscv::core {
         }
     }
 
-    attr_value_t event_queue::to_attr_list(simtime_t start) const {
+    attr_value_t EventQueue::to_attr_list(simtime_t start) const {
         // This is a placeholder implementation
         attr_value_t ret = SIM_alloc_attr_list(events_.size());
         simtime_t t = start;
@@ -184,7 +191,7 @@ namespace kz::riscv::core {
         return ret;
     }
 
-    set_error_t event_queue::set(attr_value_t *val) {
+    set_error_t EventQueue::set(attr_value_t *val) {
         clear();
         for (unsigned i = 0; i < SIM_attr_list_size(*val); i++) {
             attr_value_t elem = SIM_attr_list_item(*val, i);
@@ -195,7 +202,7 @@ namespace kz::riscv::core {
         return Sim_Set_Ok;
     }
 
-    void event_queue::clear() {
+    void EventQueue::clear() {
         events_.clear();
     }
 } /* ! kz::riscv::core ! */

@@ -144,7 +144,7 @@ namespace kz::riscv::types {
     using u_imm_t = int_n<20>;
     using j_imm_t = int_n<20>;
 
-    class dec_instr {
+    class DecInstr {
     public:
         opcode_t opcode;
         reg_nr_t rd;
@@ -155,9 +155,9 @@ namespace kz::riscv::types {
         op_type_t type;
         imm_t imm;
     };
-    using dec_instr_t = dec_instr;
+    using dec_instr_t = DecInstr;
 
-    class dec_imm {
+    class DecImm {
     public:
         bit_t instr_31;
         uint_n<6> instr_30_25;
@@ -167,9 +167,9 @@ namespace kz::riscv::types {
         uint_n<4> instr_11_8;
         bit_t instr_7;
     };
-    using dec_imm_t = dec_imm;
+    using dec_imm_t = DecImm;
 
-    class operation_type {
+    class OperationType {
     private:
         static op_type_t get_subtype_00_(uint_n<3> opcl);
         static op_type_t get_subtype_01_(uint_n<3> opcl);
@@ -194,9 +194,9 @@ namespace kz::riscv::types {
          */
         static op_type_t get_op_type(opcode_t opcode);
     };
-    using operation_type_t = operation_type;
+    using operation_type_t = OperationType;
 
-    class operation_code {
+    class OperationCode {
     public:
         // opcodes special values
         static const uint8_t NOP = 0x13;
@@ -238,5 +238,5 @@ namespace kz::riscv::types {
         static const uint8_t CUSTOM_3_RV128 = 0b11110;
         static const uint8_t RV_80 = 0b11111;
     };
-    using operation_code_t = operation_code;
+    using operation_code_t = OperationCode;
 } /* ! kz::riscv::types ! */

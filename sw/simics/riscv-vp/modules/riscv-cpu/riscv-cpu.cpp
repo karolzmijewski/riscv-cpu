@@ -30,7 +30,7 @@
 
 
 namespace kz::riscv::core {
-    riscv_cpu::riscv_cpu(simics::ConfObjectRef conf_obj)
+    RiscvCpu::RiscvCpu(simics::ConfObjectRef conf_obj)
     : simics::ConfObject(conf_obj), step_queue_("step-queue"), cycle_queue_("cycle-queue") {
         cobj_ = obj().object();
         // general registers
@@ -52,15 +52,14 @@ namespace kz::riscv::core {
         current_step_ = 0;
         time_offset_.val = {};
         // configuration
-        freq_hz_ = 100000000;  // Default frequency: 100 MHz
+        freq_hz_ = 1000;  // Default frequency: 1 kHz
         VT_set_object_clock(conf_obj, conf_obj);
     }
 
-    riscv_cpu::riscv_cpu::~riscv_cpu() {}
+    RiscvCpu::~RiscvCpu() {}
 
-    direct_memory_lookup_t riscv_cpu::get_mem_handler_(physical_address_t addr, unsigned size) {
+    direct_memory_lookup_t RiscvCpu::get_mem_handler_(physical_address_t addr, unsigned size) {
         direct_memory_lookup_t dml = phys_mem_.iface().lookup(cobj_, addr, size, Sim_Access_Read);
-        assert(dml.target == nullptr);
         SIM_LOG_INFO(
             1, cobj_, 0,
             "direct memory lookup: target='%s', offs='%llu', access='%d'",
@@ -69,7 +68,7 @@ namespace kz::riscv::core {
         return dml;
     }
 
-    uint8 *riscv_cpu::read_mem_(addr_t offset, unsigned size) {
+    uint8 *RiscvCpu::read_mem_(addr_t offset, unsigned size) {
         simics::Connect<simics::iface::DirectMemoryInterface> dm_iface;
         // set proper memory target for direct memory access interface
         dm_iface.set(mem_handler_.target);
@@ -78,25 +77,24 @@ namespace kz::riscv::core {
         // representec by "cobj" reference and subsystem id.
         direct_memory_handle_t mem_handler = dm_iface.iface().get_handle(cobj_, subsystem_, offset, size);
         direct_memory_t dm = dm_iface.iface().request(mem_handler, Sim_Access_Read, Sim_Access_Write);
-        assert(dm.data == nullptr);
         return dm.data;
     }
 
-    uint32_t riscv_cpu::read_reg_(int reg) {
+    uint32_t RiscvCpu::read_reg_(int reg) {
         if (reg < 0 || reg >= RV32I_GP_REG_NUM) {
             throw std::out_of_range("Invalid register number");
         }
         return regs_[reg];
     }
 
-    void riscv_cpu::write_reg_(int reg, uint32_t value) {
+    void RiscvCpu::write_reg_(int reg, uint32_t value) {
         if (reg < 0 || reg >= RV32I_GP_REG_NUM) {
             throw std::out_of_range("Invalid register number");
         }
         regs_[reg] = value;
     }
 
-    kz::riscv::types::instr_t riscv_cpu::fetch_(addr_t address) {
+    kz::riscv::types::instr_t RiscvCpu::fetch_(addr_t address) {
         SIM_LOG_INFO(4, cobj_, 0, "Fetching instruction from address 0x%08x", static_cast<unsigned int>(address));
         uint8 *data = read_mem_(address, INSTR_SIZE);
         instr_t instr = 0;
@@ -112,14 +110,14 @@ namespace kz::riscv::core {
         return instr;
     }
 
-    kz::riscv::types::dec_instr_t riscv_cpu::decode_(instr_t instr) {
+    kz::riscv::types::dec_instr_t RiscvCpu::decode_(instr_t instr) {
         SIM_LOG_INFO(4, cobj_, 0, "Decoding instruction 0x%08x", instr);
         dec_instr_t dec_instr;
-        riscv_cpu_decoder::decode(instr, &dec_instr);
+        RiscvCpuDecoder::decode(instr, &dec_instr);
         return dec_instr;
     }
 
-    void riscv_cpu::execute_(dec_instr_t dec_instr) {
+    void RiscvCpu::execute_(dec_instr_t dec_instr) {
         using operation_code_t = kz::riscv::types::operation_code_t;
         //cycles_t stall_cycles = 0; // for IDLE operation
         // cycles_t cycles_left = 0; // for IDLE operation
@@ -432,7 +430,7 @@ namespace kz::riscv::core {
         }
     }
 
-    void riscv_cpu::handle_events_(event_queue_t *queue) {
+    void RiscvCpu::handle_events_(event_queue_t *queue) {
         while (!queue->is_empty()
             && queue->get_delta() == 0
             && state_ != execute_state_t::Stopped) {
@@ -443,7 +441,7 @@ namespace kz::riscv::core {
         }
     }
 
-    void riscv_cpu::inc_cycles_(int cycles) {
+    void RiscvCpu::inc_cycles_(int cycles) {
         if (cycles < 0) {
             throw std::invalid_argument("Cycles to increment must be non-negative");
         }
@@ -453,7 +451,7 @@ namespace kz::riscv::core {
         }
     }
 
-    void riscv_cpu::inc_steps_(int steps) {
+    void RiscvCpu::inc_steps_(int steps) {
         if (steps < 0) {
             throw std::invalid_argument("Steps to increment must be non-negative");
         }
@@ -463,10 +461,30 @@ namespace kz::riscv::core {
         }
     }
 
-    void riscv_cpu::finalize() {
+    void RiscvCpu::frequency_port::subscribe(
+        conf_object_t *obj,
+        const char *listener_port) {
+        // It's a placeholder for implementation of frequency change subscription on CPU port
+        // dedicated to dispatching frequency change events to listeners. Here we can subscribe
+        // peripheral device, to propagate frequency changes of CPU via proper port.
+        // It's currently unused.
+        //RiscvCpu *cpu = parent();
     }
 
-    void riscv_cpu::objects_finalized() {
+    void RiscvCpu::frequency_port::unsubscribe(
+        conf_object_t *obj,
+        const char *listener_port) {
+        // It's a placeholder for implementation of frequency change unsubscription on CPU port
+        // dedicated to dispatching frequency change events to listeners. Here we can unsubscribe
+        // peripheral device, to stop propagating frequency changes of CPU via proper port.
+        // It's currently unused.
+        //RiscvCpu *cpu = parent();
+    }
+
+    void RiscvCpu::finalize() {
+    }
+
+    void RiscvCpu::objects_finalized() {
         mem_handler_ = get_mem_handler_(RESET_ADDR, RAM_SIZE);
     }
 } /* ! kz::riscv::core ! */
@@ -478,7 +496,7 @@ namespace kz::riscv::core {
 // that may be thrown during device registration
 extern "C"
 void init_local() try {
-    simics::make_class<kz::riscv::core::riscv_cpu>(
+    auto cls = simics::make_class<kz::riscv::core::RiscvCpu>(
         "riscv_cpu",
         "RV32I CPU model, single core, 32-bit, in-order, non-pipelined, no hyperthreading.",
         "This is a basic implementation of a RISC-V RV32I CPU model. It supports a subset of "
@@ -491,6 +509,11 @@ void init_local() try {
         "include all features of a full-fledged RISC-V CPU implementation. For more advanced "
         "features and optimizations, please refer to more comprehensive RISC-V CPU models or "
         "implementations.");
+    auto cpu_frequency_port = simics::make_class<kz::riscv::core::RiscvCpu::frequency_port>(
+        "cpu_frequency",
+        "Broadcasts changes in CPU frequency.",
+        "Broadcasts changes in CPU frequency.");
+    cls->add(cpu_frequency_port, "port.cpu_frequency");
 } catch(const std::exception& e) {
     std::cerr << e.what() << std::endl;
 }

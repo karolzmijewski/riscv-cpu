@@ -23,7 +23,7 @@
 #include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
-    tuple_int_string_t riscv_cpu::get_disassembly(
+    tuple_int_string_t RiscvCpu::get_disassembly(
         const char *addr_prefix,
         generic_address_t address,
         bool print_cpu,
@@ -66,13 +66,13 @@ namespace kz::riscv::core {
         }
     }
 
-    char *riscv_cpu::get_pregs(bool all) {
+    char *RiscvCpu::get_pregs(bool all) {
         strbuf_t pregs_sb = sb_new("");
         for (int i = 0; i < RV32I_GP_REG_NUM; ++i) {
             sb_addfmt(
                 &pregs_sb, "%s (%s) = 0x%08X\n",
-                riscv_cpu_disasm::get_reg_name(i, false).c_str(),
-                riscv_cpu_disasm::get_reg_name(i, true).c_str(),
+                RiscvCpuDisasm::get_reg_name(i, false).c_str(),
+                RiscvCpuDisasm::get_reg_name(i, true).c_str(),
                 regs_[i]
             );
         }
@@ -86,13 +86,13 @@ namespace kz::riscv::core {
         return sb_detach(&pregs_sb);
     }
 
-    attr_value_t riscv_cpu::get_diff_regs() {
+    attr_value_t RiscvCpu::get_diff_regs() {
         attr_value_t result = SIM_alloc_attr_list(ALL_REGS_NUM);
         // general purpose registers x0..x31
         for (int i = 0; i < RV32I_GP_REG_NUM; ++i) {
             SIM_attr_list_set_item(
                 &result, i,
-                SIM_make_attr_string(riscv_cpu_disasm::get_reg_name(i, true).c_str())
+                SIM_make_attr_string(RiscvCpuDisasm::get_reg_name(i, true).c_str())
             );
         }
         // other registers
@@ -102,7 +102,7 @@ namespace kz::riscv::core {
         return result;
     }
 
-    char *riscv_cpu::get_pending_exception_string() {
+    char *RiscvCpu::get_pending_exception_string() {
         // Check for pending exception or interrupt
         if (mcause_ != 0) {
             // Format a message describing the exception
@@ -114,12 +114,12 @@ namespace kz::riscv::core {
         return nullptr;
     }
 
-    char *riscv_cpu::get_address_prefix() {
+    char *RiscvCpu::get_address_prefix() {
         strbuf_t addr_prefix_sb = sb_new("p");
         return sb_detach(&addr_prefix_sb);
     }
 
-    physical_block_t riscv_cpu::translate_to_physical(const char *prefix, generic_address_t address) {
+    physical_block_t RiscvCpu::translate_to_physical(const char *prefix, generic_address_t address) {
         physical_block_t block = {};
         // Accept "p" (physical) and "v" (virtual) prefixes and "l" (linear) (no MMU)
         if (prefix && (prefix[0] == 'p' || prefix[0] == 'v' || prefix[0] == 'l')) {

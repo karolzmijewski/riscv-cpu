@@ -38,7 +38,7 @@
 #include "riscv-cpu-queue.hpp"
 
 namespace kz::riscv::core {
-    class riscv_cpu:
+    class RiscvCpu:
         public simics::ConfObject,
         public simics::iface::IntRegisterInterface,
         public simics::iface::StepInterface,
@@ -47,7 +47,8 @@ namespace kz::riscv::core {
         public simics::iface::ProcessorInfoInterface,
         public simics::iface::ProcessorInfoV2Interface,
         public simics::iface::ProcessorCliInterface,
-        public simics::iface::DirectMemoryUpdateInterface {
+        public simics::iface::DirectMemoryUpdateInterface,
+        public simics::iface::FrequencyListenerInterface {
     private:
         // types
         using addr_t = kz::riscv::types::addr_t;
@@ -88,8 +89,9 @@ namespace kz::riscv::core {
         void inc_cycles_(int cycles);
         void inc_steps_(int steps);
     public:
-        explicit riscv_cpu(simics::ConfObjectRef conf_obj);
-        virtual ~riscv_cpu();
+        explicit RiscvCpu(simics::ConfObjectRef conf_obj);
+        virtual ~RiscvCpu();
+        void set_freq_hz(uint64_t new_freq);
 
         /**
          * Method is called after init_local and class constructor, it is intended to do any
@@ -105,6 +107,30 @@ namespace kz::riscv::core {
          * of initialization process
          */
         void objects_finalized() override;
+
+        class frequency_port:
+            public simics::Port<RiscvCpu>,
+            public simics::iface::SimpleDispatcherInterface {
+        public:
+            explicit frequency_port(simics::ConfObjectRef obj) : simics::Port<RiscvCpu>(obj) {}
+            virtual ~frequency_port() = default;
+
+            // ! SimpleDispatcherInterface (sdispatcher-iface-impl) !
+            void subscribe(conf_object_t *listener, const char *listener_port) override;
+            void unsubscribe(conf_object_t *listener, const char *listener_port) override;
+
+            static void init_class(simics::ConfClass *cls) {
+                cls->add(simics::iface::SimpleDispatcherInterface::Info());
+            }
+        };
+
+        // ! FrequencyListenerInterface (frequency-listener-iface-impl) !
+        /**
+         * Method is called to set the frequency of the listener.
+         * @param numerator the frequency numerator in Hz
+         * @param denominator the frequency denominator in Hz
+         */
+        void set(uint64 numerator, uint64 denominator) override;
 
         // ! ProcessorCliInterface (proc-cli-iface-impl) !
         /**
@@ -658,32 +684,32 @@ namespace kz::riscv::core {
             cls->add(
                 simics::Attribute(
                     "phys_mem", "o", "Physical memory space.",
-                    ATTR_CLS_VAR(riscv_cpu, phys_mem_)
+                    ATTR_CLS_VAR(RiscvCpu, phys_mem_)
                 )
             );
             cls->add(
                 simics::Attribute(
-                    "freq", "i", "CPU frequency in Hz.",
-                    ATTR_CLS_VAR(riscv_cpu, freq_hz_)
+                    "freq_hz", "i", "CPU frequency in Hz.",
+                    ATTR_CLS_VAR(RiscvCpu, freq_hz_)
                 )
             );
             cls->add(
                 simics::Attribute(
                     "steps", "i", "Number of steps executed.",
-                    ATTR_CLS_VAR(riscv_cpu, current_step_)
+                    ATTR_CLS_VAR(RiscvCpu, current_step_)
                 )
             );
             cls->add(
                 simics::Attribute(
-                    "step_queue", "[]|[[osaii]]",
+                    "step_queue", "[]|[[osaii]*]",
                     "Step event queue: ((<i>object</i>, <i>evclass</i>, <i>value</i>, <i>slot</i>,"
                     " <i>step</i>)*).",
                     [](conf_object_t *obj) -> attr_value_t {
-                        auto *cpu = simics::from_obj<riscv_cpu>(obj);
+                        auto *cpu = simics::from_obj<RiscvCpu>(obj);
                         return cpu->step_queue_.to_attr_list(0);
                     },
                     [](conf_object_t *obj, attr_value_t *val) {
-                        auto *cpu = simics::from_obj<riscv_cpu>(obj);
+                        auto *cpu = simics::from_obj<RiscvCpu>(obj);
                         return cpu->step_queue_.set(val);
                     }
                 )
@@ -691,20 +717,20 @@ namespace kz::riscv::core {
             cls->add(
                 simics::Attribute(
                     "cycles", "i", "Number of cycles executed.",
-                    ATTR_CLS_VAR(riscv_cpu, current_cycle_)
+                    ATTR_CLS_VAR(RiscvCpu, current_cycle_)
                 )
             );
             cls->add(
                 simics::Attribute(
-                    "cycle_queue", "[]|[[osaii]]",
+                    "cycle_queue", "[]|[[osaii]*]",
                     "Cycle event queue: ((<i>object</i>, <i>evclass</i>, <i>value</i>, <i>slot</i>,"
                     " <i>cycle</i>)*).",
                     [](conf_object_t *obj) -> attr_value_t {
-                        auto *cpu = simics::from_obj<riscv_cpu>(obj);
+                        auto *cpu = simics::from_obj<RiscvCpu>(obj);
                         return cpu->cycle_queue_.to_attr_list(0);
                     },
                     [](conf_object_t *obj, attr_value_t *val) {
-                        auto *cpu = simics::from_obj<riscv_cpu>(obj);
+                        auto *cpu = simics::from_obj<RiscvCpu>(obj);
                         return cpu->cycle_queue_.set(val);
                     }
                 )
@@ -712,7 +738,7 @@ namespace kz::riscv::core {
             cls->add(
                 simics::Attribute(
                     "pc", "i", "Program counter.",
-                    ATTR_CLS_VAR(riscv_cpu, pc_)
+                    ATTR_CLS_VAR(RiscvCpu, pc_)
                 )
             );
         }

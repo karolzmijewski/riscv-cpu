@@ -31,11 +31,11 @@ namespace kz::riscv::core {
         // An event has been posted. We only single step, so we don't need to bother.
     }
 
-    pc_step_t riscv_cpu::get_step_count() {
+    pc_step_t RiscvCpu::get_step_count() {
         return current_step_;
     }
 
-    void riscv_cpu::post_step(
+    void RiscvCpu::post_step(
         event_class_t *evclass,
         conf_object_t *obj,
         pc_step_t steps,
@@ -49,7 +49,7 @@ namespace kz::riscv::core {
         step_event_posted_();
     }
 
-    void riscv_cpu::cancel_step(
+    void RiscvCpu::cancel_step(
         event_class_t *evclass,
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
@@ -58,7 +58,7 @@ namespace kz::riscv::core {
         step_queue_.remove(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
-    pc_step_t riscv_cpu::find_next_step(
+    pc_step_t RiscvCpu::find_next_step(
         event_class_t *evclass,
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
@@ -67,13 +67,13 @@ namespace kz::riscv::core {
         return step_queue_.next(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
-    // attr_value_t riscv_cpu::events() {
+    // attr_value_t RiscvCpu::events() {
     //     // Return the list of pending step events
     //     // This is a placeholder implementation
     //     return SIM_alloc_attr_list(0);
     // }
 
-    pc_step_t riscv_cpu::advance(pc_step_t steps) {
+    pc_step_t RiscvCpu::advance(pc_step_t steps) {
         // Advance the CPU by 'steps' instructions
         SIM_LOG_INFO(1, cobj_, 0, "Advancing CPU by %llu steps", steps);
         // do nothing

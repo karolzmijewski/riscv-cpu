@@ -27,7 +27,7 @@
 #include <simics/base/event.h>
 
 namespace kz::riscv::core {
-    class riscv_cpu_cycle {
+    class RiscvCpuCycle {
     private:
         static constexpr unsigned long long ONE_SECOND_AS_PS = 1000000000000ULL;
     public:

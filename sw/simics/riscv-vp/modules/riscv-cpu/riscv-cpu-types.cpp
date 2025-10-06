@@ -21,7 +21,7 @@
 #include "riscv-cpu-decode.hpp"
 
 namespace kz::riscv::types {
-    op_type_t operation_type::get_subtype_00_(uint_n<3> opcl) {
+    op_type_t operation_type_t::get_subtype_00_(uint_n<3> opcl) {
         switch(opcl) {
             case 0b000: return I_TYPE; // LOAD
             case 0b001: return OTHER_TYPE; // LOAD_FP
@@ -35,7 +35,7 @@ namespace kz::riscv::types {
         return UNDEF_TYPE;
     }
 
-    op_type_t operation_type::get_subtype_01_(uint_n<3> opcl) {
+    op_type_t operation_type_t::get_subtype_01_(uint_n<3> opcl) {
         switch(opcl) {
             case 0b000: return S_TYPE; // STORE
             case 0b001: return OTHER_TYPE; // STORE_FP
@@ -49,7 +49,7 @@ namespace kz::riscv::types {
         return UNDEF_TYPE;
     }
 
-    op_type_t operation_type::get_subtype_10_(uint_n<3> opcl) {
+    op_type_t operation_type_t::get_subtype_10_(uint_n<3> opcl) {
         switch(opcl) {
             case 0b000: return OTHER_TYPE; // MADD
             case 0b001: return OTHER_TYPE; // MSUB
@@ -63,7 +63,7 @@ namespace kz::riscv::types {
         return UNDEF_TYPE;
     }
 
-    op_type_t operation_type::get_subtype_11_(uint_n<3> opcl) {
+    op_type_t operation_type_t::get_subtype_11_(uint_n<3> opcl) {
         switch(opcl) {
             case 0b000: return B_TYPE; // BRANCH
             case 0b001: return I_TYPE; // JALR
@@ -77,7 +77,7 @@ namespace kz::riscv::types {
         return UNDEF_TYPE;
     }
 
-    op_type_t operation_type::get_op_type(opcode_t opcode) {
+    op_type_t operation_type_t::get_op_type(opcode_t opcode) {
         uint_n<2> opch = opcode >> 3;
         uint_n<3> opcl = opcode >> 0;
         switch(opch) {

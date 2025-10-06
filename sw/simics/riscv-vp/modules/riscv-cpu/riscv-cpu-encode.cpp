@@ -22,60 +22,60 @@
 
 namespace kz::riscv::core {
 
-    int32_t riscv_cpu_encoder::sign_extend_(int32_t value, int bits) {
+    int32_t RiscvCpuEncoder::sign_extend_(int32_t value, int bits) {
         int32_t mask = 1 << (bits - 1);
         return (value ^ mask) - mask;
     }
 
-    kz::riscv::types::i_imm_t riscv_cpu_encoder::enc_i_imm(dec_imm_t dec_imm) {
+    kz::riscv::types::i_imm_t RiscvCpuEncoder::enc_i_imm(dec_imm_t dec_imm) {
         using i_imm_t = kz::riscv::types::i_imm_t;
         i_imm_t enc_i_imm_val = ((i_imm_t)dec_imm.instr_31 << 11);
         enc_i_imm_val |= ((i_imm_t)dec_imm.instr_30_25 << 5);
         enc_i_imm_val |= ((i_imm_t)dec_imm.instr_24_21 << 1);
         enc_i_imm_val |= ((i_imm_t)dec_imm.instr_20);
-        enc_i_imm_val = riscv_cpu_encoder::sign_extend_(enc_i_imm_val, 12);
+        enc_i_imm_val = RiscvCpuEncoder::sign_extend_(enc_i_imm_val, 12);
         return enc_i_imm_val;
     }
-    
-    kz::riscv::types::s_imm_t riscv_cpu_encoder::enc_s_imm(dec_imm_t dec_imm) {
+
+    kz::riscv::types::s_imm_t RiscvCpuEncoder::enc_s_imm(dec_imm_t dec_imm) {
         using s_imm_t = kz::riscv::types::s_imm_t;
         s_imm_t enc_s_imm_val = ((s_imm_t)dec_imm.instr_31 << 11);
         enc_s_imm_val |= ((s_imm_t)dec_imm.instr_30_25 << 5);
         enc_s_imm_val |= ((s_imm_t)dec_imm.instr_11_8 << 1);
         enc_s_imm_val |= ((s_imm_t)dec_imm.instr_7);
-        enc_s_imm_val = riscv_cpu_encoder::sign_extend_(enc_s_imm_val, 12);
+        enc_s_imm_val = RiscvCpuEncoder::sign_extend_(enc_s_imm_val, 12);
         return enc_s_imm_val;
     }
 
-    kz::riscv::types::b_imm_t riscv_cpu_encoder::enc_b_imm(dec_imm_t dec_imm) {
+    kz::riscv::types::b_imm_t RiscvCpuEncoder::enc_b_imm(dec_imm_t dec_imm) {
         using b_imm_t = kz::riscv::types::b_imm_t;
         b_imm_t enc_b_imm_val = ((b_imm_t)dec_imm.instr_31 << 11);
         enc_b_imm_val |= ((b_imm_t)dec_imm.instr_7 << 10);
         enc_b_imm_val |= ((b_imm_t)dec_imm.instr_30_25 << 4);
         enc_b_imm_val |= ((b_imm_t)dec_imm.instr_11_8);
-        enc_b_imm_val = riscv_cpu_encoder::sign_extend_(enc_b_imm_val, 12);
+        enc_b_imm_val = RiscvCpuEncoder::sign_extend_(enc_b_imm_val, 12);
         return enc_b_imm_val;
     }
 
-    kz::riscv::types::u_imm_t riscv_cpu_encoder::enc_u_imm(dec_imm_t dec_imm) {
+    kz::riscv::types::u_imm_t RiscvCpuEncoder::enc_u_imm(dec_imm_t dec_imm) {
         using u_imm_t = kz::riscv::types::u_imm_t;
         u_imm_t enc_u_imm_val = ((u_imm_t)dec_imm.instr_31 << 19);
         enc_u_imm_val |= ((u_imm_t)dec_imm.instr_30_25 << 13);
         enc_u_imm_val |= ((u_imm_t)dec_imm.instr_24_21 << 9);
         enc_u_imm_val |= ((u_imm_t)dec_imm.instr_20 << 8);
         enc_u_imm_val |= ((u_imm_t)dec_imm.instr_19_12);
-        enc_u_imm_val = riscv_cpu_encoder::sign_extend_(enc_u_imm_val, 20);
+        enc_u_imm_val = RiscvCpuEncoder::sign_extend_(enc_u_imm_val, 20);
         return enc_u_imm_val;
     }
 
-    kz::riscv::types::j_imm_t riscv_cpu_encoder::enc_j_imm(dec_imm_t dec_imm) {
+    kz::riscv::types::j_imm_t RiscvCpuEncoder::enc_j_imm(dec_imm_t dec_imm) {
         using j_imm_t = kz::riscv::types::j_imm_t;
         j_imm_t enc_j_imm_val = ((j_imm_t)dec_imm.instr_31 << 19);
         enc_j_imm_val |= ((j_imm_t)dec_imm.instr_19_12 << 11);
         enc_j_imm_val |= ((j_imm_t)dec_imm.instr_20 << 10);
         enc_j_imm_val |= ((j_imm_t)dec_imm.instr_30_25 << 4);
         enc_j_imm_val |= ((j_imm_t)dec_imm.instr_24_21);
-        enc_j_imm_val = riscv_cpu_encoder::sign_extend_(enc_j_imm_val, 20);
+        enc_j_imm_val = RiscvCpuEncoder::sign_extend_(enc_j_imm_val, 20);
         return enc_j_imm_val;
     }
 } /* ! kz::riscv::core ! */

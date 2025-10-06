@@ -26,7 +26,7 @@
 #include "riscv-cpu-disasm.hpp"
 
 namespace kz::riscv::core {
-    std::string riscv_cpu_disasm::get_type(op_type_t type) {
+    std::string RiscvCpuDisasm::get_type(op_type_t type) {
         switch(type) {
             case operation_type_t::UNDEF_TYPE: return "UNDEF_TYPE";
             case operation_type_t::R_TYPE: return "R_TYPE";
@@ -40,7 +40,7 @@ namespace kz::riscv::core {
         return "UNKNOWN_TYPE";
     }
 
-    std::string riscv_cpu_disasm::get_opcode(opcode_t opcode) {
+    std::string RiscvCpuDisasm::get_opcode(opcode_t opcode) {
         switch (opcode) {
             case operation_code_t::LOAD: return "LOAD";
             case operation_code_t::LOAD_FP: return "LOAD_FP";
@@ -78,7 +78,7 @@ namespace kz::riscv::core {
         }
     }
 
-    std::string riscv_cpu_disasm::get_reg_name(reg_nr_t reg_nr, bool symb) {
+    std::string RiscvCpuDisasm::get_reg_name(reg_nr_t reg_nr, bool symb) {
         // string_view was used to avoid dynamic allocation for constexpr
         static constexpr std::array<std::string_view, RV32I_GP_REG_NUM> reg_names = {
             "zero", "ra",  "sp",  "gp",  "tp",  "t0",  "t1",  "t2",
@@ -91,7 +91,7 @@ namespace kz::riscv::core {
         return "x" + std::to_string(static_cast<unsigned>(reg_nr));
     }
 
-    std::string riscv_cpu_disasm::get_mnemonic(opcode_t opcode, dec_instr_t dec_instr) {
+    std::string RiscvCpuDisasm::get_mnemonic(opcode_t opcode, dec_instr_t dec_instr) {
         using namespace std::literals;
         // Lookup tables for LOAD
         static constexpr std::array<const char*, 8> load_table = {
@@ -165,7 +165,7 @@ namespace kz::riscv::core {
         }
     }
 
-    std::string riscv_cpu_disasm::disasm(addr_t pc, dec_instr_t dec_instr) {
+    std::string RiscvCpuDisasm::disasm(addr_t pc, dec_instr_t dec_instr) {
         std::ostringstream ss;
         std::string mnemonic = get_mnemonic(dec_instr.opcode, dec_instr);
         switch (dec_instr.type) {

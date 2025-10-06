@@ -17,11 +17,37 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "riscv-cpu.hpp"
+#include "riscv-cpu-cycle.hpp"
+
 namespace kz::riscv::core {
-    enum class ExecuteState {
-        Idle,
-        Running,
-        Stopped
-    };
-    using execute_state_t = ExecuteState;
-} /* ! kz::riscv::core ! */
+    void RiscvCpu::set(uint64 numerator, uint64 denominator) {
+        uint64_t old_freq = freq_hz_;
+        uint64_t new_freq = 1;
+        if (numerator == 0 || denominator == 0) {
+            SIM_LOG_ERROR(
+                cobj_, 0,
+                "Got invalid frequency from bus, setting to 1 Hz"
+            );
+        } else {
+            new_freq = (numerator + (denominator / 2)) / denominator;
+            if (new_freq == 0) {
+                /* very low frequency, round up to 1 Hz */
+                new_freq = 1;
+            }
+        }
+        VT_clock_frequency_about_to_change(cobj_);
+        if (old_freq != 0) {
+            time_offset_ = RiscvCpuCycle::adjusted_time_offset(
+                time_offset_,
+                current_cycle_,
+                old_freq,
+                new_freq
+            );
+            ASSERT(!bigtime_is_illegal(time_offset_));
+            cycle_queue_.rescale_time(old_freq, new_freq);
+        }
+        freq_hz_ = new_freq;
+        VT_clock_frequency_change(cobj_, freq_hz_);
+    }
+} // namespace kz::riscv::core

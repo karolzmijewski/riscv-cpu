@@ -28,7 +28,7 @@
 #include <simics/processor/types.h>
 
 namespace kz::riscv::core {
-    class event {
+    class Event {
     public:
         static constexpr int EVENT_QUEUE_END = -1;
         int next;               // index of next event, or EVENT_QUEUE_END
@@ -38,17 +38,16 @@ namespace kz::riscv::core {
         event_class_t *evclass; // class event belongs to
         conf_object_t *obj;     // object event operates on
         lang_void *param;       // user data
-        event();
-        event(simtime_t d, int s, event_class_t *ec, conf_object_t *o, lang_void *p);
-        ~event();
+        Event(simtime_t d, int s, event_class_t *ec, conf_object_t *o, lang_void *p);
+        ~Event();
         attr_value_t to_attr_val(simtime_t start) const;
     };
-    using event_t = event;
+    using event_t = Event;
 
-    class event_queue {
+    class EventQueue {
     public:
-        event_queue(const char *name);
-        ~event_queue();
+        EventQueue(const char *name);
+        ~EventQueue();
 
         void init(const char *name);
         simtime_t next(
@@ -71,11 +70,11 @@ namespace kz::riscv::core {
         attr_value_t to_attr_list(simtime_t start) const;
         set_error_t set(attr_value_t *val);
         void clear();
-        const std::deque<event>& get_events() const { return events_; }
-        void set_events(const std::deque<event>& new_events) { events_ = new_events; }
+        const std::deque<Event>& get_events() const { return events_; }
+        void set_events(const std::deque<Event>& new_events) { events_ = new_events; }
     private:
         std::string name_;
-        std::deque<event> events_;
+        std::deque<Event> events_;
     };
-    using event_queue_t = event_queue;
+    using event_queue_t = EventQueue;
 } /* ! kz::riscv::core ! */

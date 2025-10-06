@@ -22,7 +22,7 @@
 #include "riscv-cpu-types.hpp"
 
 namespace kz::riscv::core {
-    class riscv_cpu_decoder {
+    class RiscvCpuDecoder {
     private:
         using instr_t = kz::riscv::types::instr_t;
         using dec_instr_t = kz::riscv::types::dec_instr_t;

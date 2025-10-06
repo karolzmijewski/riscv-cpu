@@ -22,7 +22,7 @@
 #include "riscv-cpu-decode.hpp"
 
 namespace kz::riscv::core {
-    void riscv_cpu_decoder::dec_instr_(instr_t instr, dec_instr_t *p_dec_instr) {
+    void RiscvCpuDecoder::dec_instr_(instr_t instr, dec_instr_t *p_dec_instr) {
         p_dec_instr->opcode = (instr >> 2);
         p_dec_instr->rd = (instr >> 7);
         p_dec_instr->func3 = (instr >> 12);
@@ -32,7 +32,7 @@ namespace kz::riscv::core {
         p_dec_instr->type = operation_type_t::get_op_type(p_dec_instr->opcode);
     }
 
-    void riscv_cpu_decoder::dec_imm_(instr_t instr, dec_instr_t *p_dec_instr) {
+    void RiscvCpuDecoder::dec_imm_(instr_t instr, dec_instr_t *p_dec_instr) {
         dec_imm_t dec_imm;
         dec_imm.instr_31 = (instr >> 31);
         dec_imm.instr_30_25 = (instr >> 25);
@@ -44,16 +44,16 @@ namespace kz::riscv::core {
         switch(p_dec_instr->type) {
             case operation_type_t::UNDEF_TYPE: p_dec_instr->imm = 0; break;
             case operation_type_t::R_TYPE: p_dec_instr->imm = 0; break;
-            case operation_type_t::I_TYPE: p_dec_instr->imm = riscv_cpu_encoder::enc_i_imm(dec_imm); break;
-            case operation_type_t::S_TYPE: p_dec_instr->imm = riscv_cpu_encoder::enc_s_imm(dec_imm); break;
-            case operation_type_t::B_TYPE: p_dec_instr->imm = riscv_cpu_encoder::enc_b_imm(dec_imm); break;
-            case operation_type_t::U_TYPE: p_dec_instr->imm = riscv_cpu_encoder::enc_u_imm(dec_imm); break;
-            case operation_type_t::J_TYPE: p_dec_instr->imm = riscv_cpu_encoder::enc_j_imm(dec_imm); break;
+            case operation_type_t::I_TYPE: p_dec_instr->imm = RiscvCpuEncoder::enc_i_imm(dec_imm); break;
+            case operation_type_t::S_TYPE: p_dec_instr->imm = RiscvCpuEncoder::enc_s_imm(dec_imm); break;
+            case operation_type_t::B_TYPE: p_dec_instr->imm = RiscvCpuEncoder::enc_b_imm(dec_imm); break;
+            case operation_type_t::U_TYPE: p_dec_instr->imm = RiscvCpuEncoder::enc_u_imm(dec_imm); break;
+            case operation_type_t::J_TYPE: p_dec_instr->imm = RiscvCpuEncoder::enc_j_imm(dec_imm); break;
             case operation_type_t::OTHER_TYPE: p_dec_instr->imm = 0; break;
         }
     }
 
-    void riscv_cpu_decoder::decode(instr_t instr, dec_instr_t *p_dec_instr) {
+    void RiscvCpuDecoder::decode(instr_t instr, dec_instr_t *p_dec_instr) {
         dec_instr_(instr, p_dec_instr);
         dec_imm_(instr, p_dec_instr);
     }
