@@ -124,6 +124,28 @@ namespace kz::riscv::core {
             }
         };
 
+        /**
+         * Implement a custom Info class for the Step interface to prevent naming conflicts with
+         * the Cycle interface.
+         */
+        static const StepInterface::ctype step_funcs;
+        class CustomStepInfo : public simics::iface::InterfaceInfo {
+        public:
+            std::string name() const override { return STEP_INTERFACE; }
+            const interface_t *cstruct() const override { return &step_funcs; }
+        };
+
+        /**
+         * Implement a custom Info class for the Cycle interface to prevent naming conflicts with
+         * the Step interface.
+         */
+        static const CycleInterface::ctype cycle_funcs;
+        class CustomCycleInfo : public simics::iface::InterfaceInfo {
+        public:
+            std::string name() const override { return CYCLE_INTERFACE; }
+            const interface_t *cstruct() const override { return &cycle_funcs; }
+        };
+
         // ! FrequencyListenerInterface (frequency-listener-iface-impl) !
         /**
          * Method is called to set the frequency of the listener.
@@ -295,9 +317,9 @@ namespace kz::riscv::core {
             lang_void *match_data) override;
         /**
          * Method returns a list of all event classes that have events posted on them.
-         * TODO: DUPLICATE WITH CYCLE INTERFACE???
+         * original `events` method was replaced by custom due to naming conflict.
          */
-        //attr_value_t events() override;
+        attr_value_t step_events();
         /**
          * Method is used to advance the CPU by the given number of steps.
          * The method should return the number of steps that were actually executed.
@@ -458,7 +480,8 @@ namespace kz::riscv::core {
         /**
          * Method returns a list of all event classes that have events posted on them.
          */
-        attr_value_t events() override;
+        attr_value_t events(){ return cycle_events(); }
+        attr_value_t cycle_events();
         /**
          * Method returns the current time in picoseconds. The time is typically derived from the
          * cycle count and the CPU frequency.
@@ -472,10 +495,6 @@ namespace kz::riscv::core {
          * @return The number of picoseconds that have elapsed since the given time.
          */
         cycles_t cycles_delta_from_ps(local_time_t when) override;
-        /**
-         * Method returns the frequency of the CPU in Hz.
-         */
-        //uint64_t get_frequency() override;
         /**
          * Method is used to post a time event after 'picoseconds' picoseconds. The event will be
          * posted after the given time has elapsed. The event will be posted
@@ -672,13 +691,11 @@ namespace kz::riscv::core {
             // Every device that uses the direct_memory interface to access memory must implement this interface.
             cls->add(simics::iface::DirectMemoryUpdateInterface::Info());
             // Step interface is used to support stepping through instructions
-            cls->add(simics::iface::StepInterface::Info());
+            cls->add(CustomStepInfo());
             // Cycle interface is used to support cycle-accurate simulation
-            cls->add(simics::iface::CycleInterface::Info());
+            cls->add(CustomCycleInfo());
             SIM_register_clock(
-                *cls, static_cast<const cycle_interface_t*>(
-                    simics::iface::CycleInterface::Info().cstruct()
-                )
+                *cls, static_cast<const cycle_interface_t*>(CustomCycleInfo().cstruct())
             );
             // Attributes
             cls->add(

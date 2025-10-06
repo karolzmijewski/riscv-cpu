@@ -23,6 +23,20 @@
 
 namespace kz::riscv::core {
 
+    static attr_value_t step_events_c(conf_object_t *obj) {
+        auto *cpu = static_cast<RiscvCpu *>(SIM_object_data(obj));
+        return cpu->step_events();
+    }
+
+    const simics::iface::StepInterface::ctype RiscvCpu::step_funcs = {
+        simics::iface::StepInterface::FromC::get_step_count,
+        simics::iface::StepInterface::FromC::post_step,
+        simics::iface::StepInterface::FromC::cancel_step,
+        simics::iface::StepInterface::FromC::find_next_step,
+        step_events_c,
+        simics::iface::StepInterface::FromC::advance,
+    };
+
     static int match_all_(lang_void *data, lang_void *match_data) {
             return 1;
     }
@@ -39,7 +53,8 @@ namespace kz::riscv::core {
         event_class_t *evclass,
         conf_object_t *obj,
         pc_step_t steps,
-        lang_void *user_data) {
+        lang_void *user_data)
+    {
         // Post a step event after 'steps' instructions
         if (steps < 0) {
             SIM_LOG_ERROR(cobj_, 0, "can not post on step < 0");
@@ -53,7 +68,8 @@ namespace kz::riscv::core {
         event_class_t *evclass,
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
-        lang_void *match_data) {
+        lang_void *match_data)
+    {
         // Cancel step events matching the predicate
         step_queue_.remove(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
@@ -62,16 +78,44 @@ namespace kz::riscv::core {
         event_class_t *evclass,
         conf_object_t *obj,
         int (*pred)(lang_void *data, lang_void *match_data),
-        lang_void *match_data) {
+        lang_void *match_data)
+    {
         // Return the number of steps to the next matching event
         return step_queue_.next(evclass, obj, pred == NULL ? match_all_ : pred, match_data);
     }
 
-    // attr_value_t RiscvCpu::events() {
-    //     // Return the list of pending step events
-    //     // This is a placeholder implementation
-    //     return SIM_alloc_attr_list(0);
-    // }
+    attr_value_t RiscvCpu::step_events() {
+        // Return the list of pending step events
+        const auto &events = step_queue_.get_events();
+        std::vector<attr_value_t> attr_events;
+        attr_events.reserve(events.size());
+        pc_step_t s = 0;
+        for (const auto &e : events) {
+            std::string desc;
+            if (e.evclass && e.evclass->describe) {
+                char *d = e.evclass->describe(e.obj, e.param);
+                if (d) {
+                    desc = d;
+                    MM_FREE(d);
+                }
+            }
+            s += e.delta;
+            attr_events.push_back(
+                SIM_make_attr_list(
+                    4,
+                    SIM_make_attr_object(e.obj),
+                    SIM_make_attr_string(e.evclass ? e.evclass->name : ""),
+                    SIM_make_attr_uint64(s),
+                    SIM_make_attr_string(desc.c_str())
+                )
+            );
+        }
+        attr_value_t ret = SIM_alloc_attr_list(static_cast<int>(attr_events.size()));
+        for (size_t i = 0; i < attr_events.size(); ++i) {
+            SIM_attr_list_set_item(&ret, static_cast<int>(i), attr_events[i]);
+        }
+        return ret;
+    }
 
     pc_step_t RiscvCpu::advance(pc_step_t steps) {
         // Advance the CPU by 'steps' instructions

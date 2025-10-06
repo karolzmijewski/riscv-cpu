@@ -25,6 +25,28 @@
 
 namespace kz::riscv::core {
 
+    static attr_value_t cycle_events_c(conf_object_t *obj) {
+        auto *cpu = static_cast<RiscvCpu *>(SIM_object_data(obj));
+        return cpu->cycle_events();
+    }
+
+    const simics::iface::CycleInterface::ctype RiscvCpu::cycle_funcs = {
+        simics::iface::CycleInterface::FromC::get_cycle_count,
+        simics::iface::CycleInterface::FromC::get_time,
+        simics::iface::CycleInterface::FromC::cycles_delta,
+        simics::iface::CycleInterface::FromC::get_frequency,
+        simics::iface::CycleInterface::FromC::post_cycle,
+        simics::iface::CycleInterface::FromC::post_time,
+        simics::iface::CycleInterface::FromC::cancel,
+        simics::iface::CycleInterface::FromC::find_next_cycle,
+        simics::iface::CycleInterface::FromC::find_next_time,
+        cycle_events_c,
+        simics::iface::CycleInterface::FromC::get_time_in_ps,
+        simics::iface::CycleInterface::FromC::cycles_delta_from_ps,
+        simics::iface::CycleInterface::FromC::post_time_in_ps,
+        simics::iface::CycleInterface::FromC::find_next_time_in_ps,
+    };
+
     static int match_all_(lang_void *data, lang_void *match_data) {
             return 1;
     }
@@ -112,7 +134,7 @@ namespace kz::riscv::core {
             }, freq_hz_);
     }
 
-    attr_value_t RiscvCpu::events() {
+    attr_value_t RiscvCpu::cycle_events() {
         // Return the list of pending cycle events
         attr_value_t evs = SIM_alloc_attr_list(static_cast<int>(cycle_queue_.get_events().size()));
         cycles_t t = 0;
