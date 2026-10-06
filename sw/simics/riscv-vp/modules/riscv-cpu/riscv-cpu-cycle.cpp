@@ -87,7 +87,7 @@ namespace kz::riscv::core {
     bool RiscvCpuCycle::generic_cycles_from_ps(
         local_time_t when,
         bigtime_t time_offset,
-        uint64_t freq,
+        uint64 freq,
         cycles_t *cycles)
     {
         return ps_as_cc_floor(
@@ -102,7 +102,7 @@ namespace kz::riscv::core {
         local_time_t when,
         bigtime_t time_offset,
         cycles_t cycle_count,
-        uint64_t freq,
+        uint64 freq,
         cycles_t *delta)
     {
         cycles_t cycles;
@@ -114,15 +114,15 @@ namespace kz::riscv::core {
     bigtime_t RiscvCpuCycle::adjusted_time_offset(
         bigtime_t current_offset,
         cycles_t cycle_count,
-        uint64_t old_freq,
-        uint64_t new_freq)
+        uint64 old_freq,
+        uint64 new_freq)
     {
         bigtime_t current_time = get_time_in_big_ps(current_offset, cycle_count, old_freq);
         bigtime_t raw_cc_time = get_time_in_big_ps((bigtime_t) BIGTIME_ZERO, cycle_count, new_freq);
         return bigtime_sub_bigtime(current_time, raw_cc_time);
     }
 
-    bool RiscvCpuCycle::posting_cycle_delta(bigtime_t ps, uint64_t freq, cycles_t *delta) {
+    bool RiscvCpuCycle::posting_cycle_delta(bigtime_t ps, uint64 freq, cycles_t *delta) {
         cycles_t result;
         if (!ps_as_cc_nearest(ps, freq, &result)) {
             return false;

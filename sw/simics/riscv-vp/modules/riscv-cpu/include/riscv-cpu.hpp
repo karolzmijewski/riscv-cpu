@@ -386,7 +386,7 @@ namespace kz::riscv::core {
          * Method returns the frequency of the CPU in Hz.
          * @return frequency in Hz
          */
-        uint64_t get_frequency() override;
+        uint64 get_frequency() override;
         /**
          * Method is used to post a cycle event after 'cycles' cycles. The event will be posted
          * after the given number of cycles have been executed. The event will be posted
@@ -693,7 +693,6 @@ namespace kz::riscv::core {
             // Step interface is used to support stepping through instructions
             cls->add(CustomStepInfo());
             // Cycle interface is used to support cycle-accurate simulation
-            cls->add(CustomCycleInfo());
             SIM_register_clock(
                 *cls, static_cast<const cycle_interface_t*>(CustomCycleInfo().cstruct())
             );

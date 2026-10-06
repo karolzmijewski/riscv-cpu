@@ -67,7 +67,7 @@ namespace kz::riscv::core {
         return cycles_delta_from_ps(local_time_from_sec(cobj_, when));
     }
 
-    uint64_t RiscvCpu::get_frequency() {
+    uint64 RiscvCpu::get_frequency() {
         return freq_hz_;
     }
 

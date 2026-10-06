@@ -17,8 +17,24 @@
 
 simics_add_module(
     riscv-cpu
-    CLASSES riscv_cpu
-    SOURCES riscv-cpu.cc module_load.py
+    CLASSES riscv_cpu cpu_frequency
+    SOURCES
+        riscv-cpu.cpp
+        riscv-cpu-decode.cpp
+        riscv-cpu-encode.cpp
+        riscv-cpu-disasm.cpp
+        riscv-cpu-types.cpp
+        riscv-cpu-queue.cpp
+        riscv-cpu-cycle.cpp
+        ifaces/reg-iface-impl.cpp
+        ifaces/exec-iface-impl.cpp
+        ifaces/step-iface-impl.cpp
+        ifaces/proc-iface-impl.cpp
+        ifaces/proc-cli-iface-impl.cpp
+        ifaces/dmem-iface-impl.cpp
+        ifaces/cycle-iface-impl.cpp
+        ifaces/freq-iface-impl.cpp
+        module_load.py
     SIMICS_API 7
     INIT_LOCAL
 )
