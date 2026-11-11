@@ -316,12 +316,22 @@ export SIMICS_BASE=/opt/simics/simics-7/simics-7.84.0
 
 ### 3. Project Setup
 
-Create the project files in the existing project directory with the Base `project-setup` tool:
+On Ubuntu 24.04, install the build tools and Python support used by Simics project setup:
 
 ```bash
-cd sw/simics/riscv-vp
-"$SIMICS_BASE/bin/project-setup" --ignore-existing-files .
+sudo apt update
+sudo apt install -y build-essential cmake ninja-build python3.12-venv python3-psutil
 ```
+
+From the repository root, create or update the Simics project metadata with the Base `project-setup` tool.
+`--ignore-existing-files` preserves the repository's existing project files:
+
+```bash
+"$SIMICS_BASE/bin/project-setup" --ignore-existing-files "$PWD/sw/simics/riscv-vp"
+```
+
+Leave `SIMICS_PYTHON` unset unless it points to a real Python interpreter. Do not set it to Simics'
+`bin/mini-python`, which is a launcher script.
 
 This generates `GNUmakefile`, `bin/`, `simics`, `targets/` and other helper files. They are specific to your
 machine and are excluded by `.gitignore`. Do not edit or commit them. If the Simics Base version changes, re-run
@@ -329,18 +339,31 @@ machine and are excluded by `.gitignore`. Do not edit or commit them. If the Sim
 
 ### 4. Build and Launch
 
-Build the `riscv-cpu` module with CMake and Ninja (the build tree `bt/` is excluded by `.gitignore`), then run
-the script:
+Build the module from the Simics project root, not from `modules/riscv-cpu`. The build tree `bt/` is excluded by
+`.gitignore`:
 
 ```bash
 cd sw/simics/riscv-vp
-cmake -S . -B bt -G Ninja -DCMAKE_BUILD_TYPE=Debug
-cmake --build bt
+cmake -S . -B bt -G Ninja \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DWHERE_TO_GLOB_FOR_MODULES=IN_PROJECT
+cmake --build bt --target riscv-cpu
+```
+
+`IN_PROJECT` restricts CMake's module discovery to this project. It avoids configuring unrelated installed modules
+that may expect the optional Simics Python package. The built module is written to `linux64/lib/riscv-cpu.so`.
+
+Run the module tests with `ctest --test-dir bt --output-on-failure`. The tests currently expose unfinished
+behavior, so a successful module build does not imply they pass yet.
+
+Then start Simics and run the script:
+
+```bash
 ./simics riscv-vacuum.simics
 ```
 
 Use `./simics --help` for further options. Update the ELF path in `riscv-vacuum.simics` (`phys_mem.load-binary`)
-to match your system.
+to match your system. See [sw/README.md](../sw/README.md) for an example session.
 
 ### 5. Troubleshooting
 

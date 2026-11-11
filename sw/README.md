@@ -8,54 +8,9 @@ early stage. So far, instruction fetch-decode-execute path, along with instructi
 disassembly logic, have been implemented. Most of the interfaces and functionalities required
 to make the model functional at a very basic level are still in progress.
 
-# Setup
-Install Simics Base and the model packages required by the project first.
-https://www.intel.com/content/www/us/en/developer/articles/tool/simics-simulator.html
-
-The commands below assume Simics Base is installed at `/opt/simics/simics-6/simics-7.84.0`. Change
-that path if your installation differs.
-
-On Ubuntu 24, install the build tools and Python support used by Simics project setup:
-
-```bash
-sudo apt update
-sudo apt install -y build-essential cmake ninja-build python3.12-venv python3-psutil
-```
-
-From the repository root, create or update the Simics project metadata. `--ignore-existing-files`
-preserves the repository's existing project files. Leave `SIMICS_PYTHON` unset unless it points to
-a real Python interpreter. Do not set it to Simics' `bin/mini-python`, which is a launcher script.
-
-```bash
-cd riscv-cpu
-/opt/simics/simics-6/simics-7.84.0/bin/project-setup \
-	--ignore-existing-files "$PWD/sw/simics/riscv-vp"
-```
-
-# Build
-Build the module from the Simics project root, not from `modules/riscv-cpu`:
-
-```bash
-cd riscv-cpu/sw/simics/riscv-vp
-cmake -S . -B bt -G Ninja \
-	-DCMAKE_BUILD_TYPE=Debug \
-	-DWHERE_TO_GLOB_FOR_MODULES=IN_PROJECT
-cmake --build bt --target riscv-cpu
-```
-
-`IN_PROJECT` restricts CMake's module discovery to this project. It avoids configuring unrelated
-installed modules that may expect the optional Simics Python package. The built module is written to
-`linux64/lib/riscv-cpu.so`.
-
-Run the module tests with:
-
-```bash
-ctest --test-dir bt --output-on-failure
-```
-
-The tests currently expose unfinished behavior: the `riscv-cpu` test creates a CPU without connecting
-`phys_mem`, and the info/status check reports missing commands for the `cpu_frequency` port class.
-A successful module build does not imply these tests pass yet.
+# Setup and Build
+See the [Simics setup guide](../docs/sw-env-setup.md#part-2-simics) for installing Simics, creating the Simics
+project and building the `riscv-cpu` module.
 
 # Run
 The CPU model is currently running in vacuum mode — an environment provided by Simics for developing
