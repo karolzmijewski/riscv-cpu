@@ -18,6 +18,8 @@ and installation path you actually selected.
     - [Vitis GUI does not appear](#vitis-gui-does-not-appear)
     - [`installLibs.sh` fails](#installlibssh-fails)
     - [Vitis reports missing GLIBCXX versions](#vitis-reports-missing-glibcxx-versions)
+    - [Vitis HLS cannot use the configured FPGA part](#vitis-hls-cannot-use-the-configured-fpga-part)
+    - [Vivado reports no valid license (Host ID mismatch)](#vivado-reports-no-valid-license-host-id-mismatch)
 
 ## 1. Download
 
@@ -177,3 +179,56 @@ env LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 \
 ```
 
 Remove the override if it causes different library errors. Do not apply it to unrelated tools such as Simics.
+
+### Vitis HLS cannot use the configured FPGA part
+
+Errors such as `Vivado Design Suite cannot be launched because a valid license was not found` followed by
+`[HLS 200-1023] Part 'xc7z020clg400-2' is not supported` can indicate either missing device support in the
+Vivado installation or a license problem. The HLS message alone does not distinguish between them.
+
+1. In the AMD unified installer, modify the Vivado installation and confirm that **Zynq-7000** device support
+   is installed. A Vivado board definition (such as the one linked above for the Z7-Nano) does not install
+   the device family support.
+2. Check Vivado License Manager for a valid license that covers the Vivado/HLS operations being run and the
+   target device. Refer to the [AMD licensing portal](https://account.amd.com/en/forms/license/license-form.html)
+   and section 4 above. If using a node-locked license, confirm it was generated for this machine.
+3. Source the Vitis and Vivado settings scripts in the same terminal used to start the HLS flow, and check
+   that any configured license environment variable points to the intended license server or file.
+4. Retry HLS with the configured part `xc7z020clg400-2`. Do not change the part merely to work around a
+   missing device installation or license. Change it only when intentionally targeting different hardware.
+
+### Vivado reports no valid license (Host ID mismatch)
+
+FlexNet (FlexNet Publisher, formerly FlexLM) is the license manager built into Vivado. It checks that the
+license file matches the machine, typically by the MAC address of a network adapter.
+
+A MAC-locked license requires its `HOSTID=` value to match a host ID detected by FlexNet. A MAC address
+visible in `ip link` is not necessarily accepted: for example, a WSL2 dummy interface may be ignored.
+Compare the license host ID and the detected Ethernet host IDs:
+
+```bash
+grep -o 'HOSTID=[0-9a-fA-F]*' ~/.Xilinx/Xilinx.lic | sort -u
+"$XILINX_ROOT/Vivado/bin/unwrapped/lnx64.o/lmutil" lmhostid -ether
+```
+
+If `lmutil` cannot execute because its LSB loader is missing, on 64-bit Ubuntu try:
+
+```bash
+/lib64/ld-linux-x86-64.so.2 "$XILINX_ROOT/Vivado/bin/unwrapped/lnx64.o/lmutil" lmhostid -ether
+```
+
+With the default WSL2 NAT networking, `eth0` is a virtual adapter whose MAC can change between restarts, so a
+license bound to it stops working. Switch WSL2 to mirrored networking so it uses the host's physical
+adapter and its permanent MAC:
+
+1. In Windows, add to `%UserProfile%\.wslconfig` (requires Windows 11 22H2 or later):
+
+   ```ini
+   [wsl2]
+   networkingMode=mirrored
+   ```
+
+2. Run `wsl --shutdown` in PowerShell and start WSL again.
+3. Check that `lmutil lmhostid -ether` (above) reports the MAC of the physical adapter, normally `eth0`,
+   matching the one in Windows (`ipconfig /all`).
+4. Generate a new license in the AMD portal for that MAC and reinstall it as described in section 4.
