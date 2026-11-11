@@ -1,34 +1,48 @@
 # Environment Setup
 
-This project uses AMD Vitis HLS (High Level Synthesis) to synthesize its C++ CPU model to RTL and Vivado.
-Vivado is the FPGA design and implementation tool used by the HLS flow. The repository contains a Vitis HLS
-component configuration under `hw/hls/riscv-ips/fde_ip`. It does not currently contain a complete Vivado
-board project or generated bitstream.
+The project has two toolchains, described in separate parts of this document:
+
+1. [Part 1: FPGA (Vivado and Vitis)](#part-1-fpga-vivado-and-vitis) - AMD Vitis HLS synthesizes the C++ CPU model
+   to RTL and Vivado. The repository contains a Vitis HLS component configuration under `hw/hls/riscv-ips/fde_ip`.
+   It does not currently contain a complete Vivado board project or generated bitstream.
+2. [Part 2: Simics](#part-2-simics) - Intel Simics is the software simulator of the same CPU (`sw/simics/riscv-vp`).
+
+For now the Simics model and the HLS code are separate sources. The plan is to unify them into a single source
+code base shared by the FPGA and Simics flows.
+
+- [Environment Setup](#environment-setup)
+  - [Part 1: FPGA (Vivado and Vitis)](#part-1-fpga-vivado-and-vitis)
+    - [1. Download](#1-download)
+    - [2. Install](#2-install)
+    - [3. Linux Dependencies](#3-linux-dependencies)
+    - [4. Vivado Licensing on Linux](#4-vivado-licensing-on-linux)
+    - [5. Launch Vivado and Vitis](#5-launch-vivado-and-vitis)
+    - [6. Troubleshooting](#6-troubleshooting)
+      - [Vitis GUI does not appear](#vitis-gui-does-not-appear)
+      - [`installLibs.sh` fails](#installlibssh-fails)
+      - [Vitis reports missing GLIBCXX versions](#vitis-reports-missing-glibcxx-versions)
+      - [Vitis HLS cannot use the configured FPGA part](#vitis-hls-cannot-use-the-configured-fpga-part)
+      - [Vivado reports no valid license (Host ID mismatch)](#vivado-reports-no-valid-license-host-id-mismatch)
+  - [Part 2: Simics](#part-2-simics)
+    - [1. Download](#1-download-1)
+    - [2. Install](#2-install-1)
+    - [3. Project Setup](#3-project-setup)
+    - [4. Build and Launch](#4-build-and-launch)
+    - [5. Troubleshooting](#5-troubleshooting)
+
+## Part 1: FPGA (Vivado and Vitis)
 
 These instructions use AMD's unified Linux installer. The examples use version 2026.1. Substitute the version
 and installation path you actually selected.
 
-- [Environment Setup](#environment-setup)
-  - [1. Download](#1-download)
-  - [2. Install](#2-install)
-  - [3. Linux Dependencies](#3-linux-dependencies)
-  - [4. Vivado Licensing on Linux](#4-vivado-licensing-on-linux)
-  - [5. Launch Vivado and Vitis](#5-launch-vivado-and-vitis)
-  - [6. Troubleshooting](#6-troubleshooting)
-    - [Vitis GUI does not appear](#vitis-gui-does-not-appear)
-    - [`installLibs.sh` fails](#installlibssh-fails)
-    - [Vitis reports missing GLIBCXX versions](#vitis-reports-missing-glibcxx-versions)
-    - [Vitis HLS cannot use the configured FPGA part](#vitis-hls-cannot-use-the-configured-fpga-part)
-    - [Vivado reports no valid license (Host ID mismatch)](#vivado-reports-no-valid-license-host-id-mismatch)
-
-## 1. Download
+### 1. Download
 
 Sign in to the [AMD downloads page](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vitis.html)
 and download the Linux unified installer for Vivado and Vitis. The installer file is named using a release-specific
 pattern such as `FPGAs_AdaptiveSoCs_Unified_SDI_<release>_<suffix>_Lin64.bin`. The release and suffix can vary
-between downloads. AMD may require an account and acceptance of its license terms.
+between downloads. AMD requires an account and acceptance of its license terms.
 
-## 2. Install
+### 2. Install
 
 Run the downloaded installer and follow its prompts. Accept the license terms, select both Vivado and Vitis,
 and choose an installation directory (for instance: `/opt/xilinx/2026.1`).
@@ -40,7 +54,7 @@ For example:
 export XILINX_ROOT=/opt/xilinx/2026.1
 ```
 
-## 3. Linux Dependencies
+### 3. Linux Dependencies
 
 Vitis and Vivado supports a variety of operating systems. For this project use 64-bit **Ubuntu 24.04** and make sure the
 required disk space is available (both consumes a lot of memory). Run AMD's dependency script after installation:
@@ -80,7 +94,7 @@ For the Classic Java-based Vitis IDE, install Java if it is not already present:
 sudo apt install -y default-jre
 ```
 
-## 4. Vivado Licensing on Linux
+### 4. Vivado Licensing on Linux
 
 Some Vivado device and implementation features require a license. Check the current AMD licensing page for
 the license tier that covers your device and features. For a node-locked license, use the Host ID reported
@@ -102,7 +116,7 @@ chmod 600 "$HOME/.Xilinx/Xilinx.lic"
 Alternatively, load the license using Vivado License Manager (VLM) with **Load License** and **Copy License**.
 If Vivado later reports no license, compare its detected Host ID with the one used to generate the license.
 
-## 5. Launch Vivado and Vitis
+### 5. Launch Vivado and Vitis
 
 Source each tool's settings script in the terminal where you want to use that tool:
 
@@ -133,9 +147,9 @@ For the Z7-Nano 7020 (XC7Z020), a Vivado board definition is available in
 not a complete Vivado implementation project. That project must still be supplied separately. A different target
 board can also be used if a compatible board definition is available to Vivado.
 
-## 6. Troubleshooting
+### 6. Troubleshooting
 
-### Vitis GUI does not appear
+#### Vitis GUI does not appear
 
 Check that a graphical display is available to the Linux session:
 
@@ -154,13 +168,13 @@ Missing GTK/Electron libraries and display forwarding are common causes of a sil
 terminal output first. If needed, use
 `strace -f -o vitis.log "$XILINX_ROOT/Vitis/bin/vitis"` to identify a missing library.
 
-### `installLibs.sh` fails
+#### `installLibs.sh` fails
 
 If the error mentions `^M` or a bad interpreter, normalize the script line endings as shown in section 3.
 If apt cannot locate legacy `libtinfo5` or `libncurses5`, search for the current package names for your
 Ubuntu release and install the remaining dependencies individually.
 
-### Vitis reports missing GLIBCXX versions
+#### Vitis reports missing GLIBCXX versions
 
 Only use this workaround if the error specifically says a required `GLIBCXX` version is missing. Check the
 system library first:
@@ -180,7 +194,7 @@ env LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 \
 
 Remove the override if it causes different library errors. Do not apply it to unrelated tools such as Simics.
 
-### Vitis HLS cannot use the configured FPGA part
+#### Vitis HLS cannot use the configured FPGA part
 
 Errors such as `Vivado Design Suite cannot be launched because a valid license was not found` followed by
 `[HLS 200-1023] Part 'xc7z020clg400-2' is not supported` can indicate either missing device support in the
@@ -197,7 +211,7 @@ Vivado installation or a license problem. The HLS message alone does not disting
 4. Retry HLS with the configured part `xc7z020clg400-2`. Do not change the part merely to work around a
    missing device installation or license. Change it only when intentionally targeting different hardware.
 
-### Vivado reports no valid license (Host ID mismatch)
+#### Vivado reports no valid license (Host ID mismatch)
 
 FlexNet (FlexNet Publisher, formerly FlexLM) is the license manager built into Vivado. It checks that the
 license file matches the machine, typically by the MAC address of a network adapter.
@@ -232,3 +246,103 @@ adapter and its permanent MAC:
 3. Check that `lmutil lmhostid -ether` (above) reports the MAC of the physical adapter, normally `eth0`,
    matching the one in Windows (`ipconfig /all`).
 4. Generate a new license in the AMD portal for that MAC and reinstall it as described in section 4.
+
+## Part 2: Simics
+
+The Simics project lives in `sw/simics/riscv-vp`. It contains the `riscv-cpu` module sources under `modules/` and
+the `riscv-vacuum.simics` script. The instructions below use Simics Base 7.84.0. Substitute your version.
+
+### 1. Download
+
+Two separate things are needed:
+
+1. **Intel Simics Package Manager (ISPM)** - the tool that installs and manages Simics packages.
+2. **Simics packages** - Simics Base (package #1000) and the models and libraries built on top of it.
+
+Download both from the
+[Intel Simics download page](https://www.intel.com/content/www/us/en/developer/articles/tool/simics-simulator.html).
+The free packages are distributed as one bundle, for example `simics-7-packages-2026-42-linux64.ispm`.
+
+All packages must come from the same Simics major version (here 7). Packages built for Simics 4.8, 5 or 6 do
+not work with Simics 7, because the API changes between major versions. Old models built with an older toolchain
+may fail to load into a newer Simics, or even crash the simulator, and the DML compiler (DMLC) may not be able to
+rebuild them against the new API.
+
+### 2. Install
+
+Despite its extension, the bundle is not a valid ISPM package. It is an archive containing many ISPM packages, so
+unpack it first with a standard tool, then install the packages from the unpacked directory, using it as a package
+repository. Use a Simics 7 specific installation directory, for example `/opt/simics/simics-7`, instead of a
+Simics 6 one:
+
+```bash
+mkdir simics-packages
+tar -xf simics-7-packages-2026-42-linux64.ispm -C simics-packages
+ispm packages --install-all --package-repo ./simics-packages --install-dir /opt/simics/simics-7
+```
+
+This installs everything in the bundle, which is recommended. Add `--non-interactive` to skip the prompts. If
+`--install-dir` is omitted, `ispm` uses its configured installation path. Check the result with
+`ispm packages --list-installed --install-dir /opt/simics/simics-7`.
+
+At minimum this project needs the standard set of packages (package numbers starting with 1):
+
+| Package | Number | File name pattern |
+| --- | --- | --- |
+| Simics Base | 1000 | `simics-pkg-1000-7.*-linux64.ispm` |
+| SystemC Library (not used yet) | 1013 | `simics-pkg-1013-7.*-linux64.ispm` |
+| Simics GUI external | 1015 | `simics-pkg-1015-7.*-linux64.ispm` |
+| Crypto Engine | 1030 | `simics-pkg-1030-7.*-linux64.ispm` |
+| GDB | 1031 | `simics-pkg-1031-7.*-linux64.ispm` |
+
+The package number and the major version (7) are stable, but the rest of the version differs between bundle
+releases. For example, the 2026-42 bundle contains Simics Base 7.84.0, which this guide uses as an example. Your
+bundle may contain newer versions, so check the actual file names with `ls ./simics-packages`.
+
+To install only selected packages, pass the package files instead of `--install-all`:
+
+```bash
+ispm packages --install ./simics-packages/simics-pkg-{1000,1013,1015,1030,1031}-7.*-linux64.ispm \
+    --install-dir /opt/simics/simics-7
+```
+
+The bundle also contains concrete models (numbers 2050 and above), such as the RISC-V CPU, RISC-V Simple and QSP
+packages, which are useful references. For the commands below, set:
+
+```bash
+# adjust to the installed Simics Base version
+export SIMICS_BASE=/opt/simics/simics-7/simics-7.84.0
+```
+
+### 3. Project Setup
+
+Create the project files in the existing project directory with the Base `project-setup` tool:
+
+```bash
+cd sw/simics/riscv-vp
+"$SIMICS_BASE/bin/project-setup" --ignore-existing-files .
+```
+
+This generates `GNUmakefile`, `bin/`, `simics`, `targets/` and other helper files. They are specific to your
+machine and are excluded by `.gitignore`. Do not edit or commit them. If the Simics Base version changes, re-run
+`project-setup` so the generated files point to the new installation.
+
+### 4. Build and Launch
+
+Build the `riscv-cpu` module with CMake and Ninja (the build tree `bt/` is excluded by `.gitignore`), then run
+the script:
+
+```bash
+cd sw/simics/riscv-vp
+cmake -S . -B bt -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build bt
+./simics riscv-vacuum.simics
+```
+
+Use `./simics --help` for further options. Update the ELF path in `riscv-vacuum.simics` (`phys_mem.load-binary`)
+to match your system.
+
+### 5. Troubleshooting
+
+`project-setup` may print `Warning: mini-python not found. Falling back to host Python 'python3'.` before the
+project is fully set up. This is expected. To choose the Python explicitly, pass `--python` or set `SIMICS_PYTHON`.
